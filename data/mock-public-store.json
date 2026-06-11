@@ -1,0 +1,492 @@
+{
+  "products": [
+    {
+      "id": "onemutan-chainsaw-man",
+      "name": "Onemutan Chainsaw Man",
+      "image": "/gacha-onemutan-chainsaw-man.png",
+      "images": [
+        "/gacha-onemutan-chainsaw-man.png"
+      ],
+      "stock": 30,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "ลุ้นฟิกเกอร์สุดน่ารักจากคอลเลกชันพิเศษ พร้อมเอฟเฟกต์สุ่มแบบเต็มจอ",
+      "badges": [
+        "popular"
+      ],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [],
+      "createdAt": "2026-06-06T21:04:27.571Z"
+    },
+    {
+      "id": "onemutan-jujutsu-kaisen",
+      "name": "Onemutan Jujutsu Kaisen",
+      "image": "/gacha-onemutan-jujutsu-kaisen.jpg",
+      "images": [
+        "/gacha-onemutan-jujutsu-kaisen.jpg"
+      ],
+      "stock": 33,
+      "priceCoin": 69,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "ลุ้นฟิกเกอร์สุดน่ารักจากคอลเลกชันพิเศษ พร้อมเอฟเฟกต์สุ่มแบบเต็มจอ",
+      "badges": [
+        "popular"
+      ],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [],
+      "createdAt": "2026-06-03T01:00:25.336Z"
+    },
+    {
+      "id": "onemutan-vigilante-my-hero-academia",
+      "name": "Onemutan Vigilante -My Hero Academia",
+      "image": "/gacha-onemutan-vigilante-my-hero-academia.jpg",
+      "images": [
+        "/gacha-onemutan-vigilante-my-hero-academia.jpg"
+      ],
+      "stock": 13,
+      "priceCoin": 99,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "ลุ้นฟิกเกอร์สุดน่ารักจากคอลเลกชันพิเศษ พร้อมเอฟเฟกต์สุ่มแบบเต็มจอ",
+      "badges": [
+        "ending"
+      ],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [],
+      "createdAt": "2026-06-03T01:00:25.336Z"
+    },
+    {
+      "id": "product_mpypottq_7ugo5",
+      "name": "Chainsaw Man",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511877516170625185/2026-06-02_063215.png?ex=6a220d29&is=6a20bba9&hm=a504b4028e9c22325dff61117d4f5d1c75fbd0b81f0393ded2468b48dcc639c8&=&format=webp&quality=lossless",
+      "images": [
+        "https://media.discordapp.net/attachments/1511874791534100583/1511877516170625185/2026-06-02_063215.png?ex=6a220d29&is=6a20bba9&hm=a504b4028e9c22325dff61117d4f5d1c75fbd0b81f0393ded2468b48dcc639c8&=&format=webp&quality=lossless"
+      ],
+      "stock": 166,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "ลุ้นฟิกเกอร์สุดน่ารักจากคอลเลกชันพิเศษ พร้อมเอฟเฟกต์สุ่มแบบเต็มจอ",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [
+        {
+          "id": "makima",
+          "name": "MAKIMA",
+          "image": "/rewards/makima.png",
+          "quantity": 94
+        },
+        {
+          "id": "power",
+          "name": "POWER",
+          "image": "/rewards/power.png",
+          "quantity": 16
+        },
+        {
+          "id": "aki",
+          "name": "AKI",
+          "image": "/rewards/aki.png",
+          "quantity": 19
+        },
+        {
+          "id": "denji",
+          "name": "DENJI",
+          "image": "/rewards/denji.png",
+          "quantity": 19
+        },
+        {
+          "id": "pochita",
+          "name": "POCHITA",
+          "image": "/rewards/pochita.png",
+          "quantity": 19
+        }
+      ],
+      "createdAt": "2026-06-03T23:42:47.294Z"
+    },
+    {
+      "id": "product_mpypmebi_wxoqi",
+      "name": "エモーショナルライトアップポスターコレクション sideB",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511877308947103774/IMG_9230_1.jpeg?ex=6a2558b7&is=6a240737&hm=7fb1445363ce3d233cb070937517216eb38e281af5cfd25fb91b2300cfe888f0&=&format=webp",
+      "images": [
+        "https://media.discordapp.net/attachments/1511874791534100583/1511877308947103774/IMG_9230_1.jpeg?ex=6a2558b7&is=6a240737&hm=7fb1445363ce3d233cb070937517216eb38e281af5cfd25fb91b2300cfe888f0&=&format=webp"
+      ],
+      "stock": 94,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [
+        {
+          "id": "makima",
+          "name": "MAKIMA",
+          "image": "/rewards/makima.png",
+          "quantity": 1
+        },
+        {
+          "id": "power",
+          "name": "POWER",
+          "image": "/rewards/power.png",
+          "quantity": 4
+        },
+        {
+          "id": "aki",
+          "name": "AKI",
+          "image": "/rewards/aki.png",
+          "quantity": 8
+        },
+        {
+          "id": "denji",
+          "name": "DENJI",
+          "image": "/rewards/denji.png",
+          "quantity": 18
+        },
+        {
+          "id": "pochita",
+          "name": "POCHITA",
+          "image": "/rewards/pochita.png",
+          "quantity": 63
+        }
+      ],
+      "createdAt": "2026-06-03T23:40:53.886Z"
+    },
+    {
+      "id": "product_mpypkwi9_i8t94",
+      "name": "カークラフト マツダ",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511875576430989463/ofuton_POP_fix.jpg?ex=6a220b5a&is=6a20b9da&hm=9cca1c59c654b1a67e66ad13ddbd7fe957a4d04298e0e76b3e9906c2f95a2c68&=&format=webp&width=939&height=902",
+      "images": [
+        "https://media.discordapp.net/attachments/1511874791534100583/1511875576430989463/ofuton_POP_fix.jpg?ex=6a220b5a&is=6a20b9da&hm=9cca1c59c654b1a67e66ad13ddbd7fe957a4d04298e0e76b3e9906c2f95a2c68&=&format=webp&width=939&height=902"
+      ],
+      "stock": 100,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [
+        {
+          "id": "makima",
+          "name": "MAKIMA",
+          "image": "/rewards/makima.png",
+          "quantity": 1
+        },
+        {
+          "id": "power",
+          "name": "POWER",
+          "image": "/rewards/power.png",
+          "quantity": 4
+        },
+        {
+          "id": "aki",
+          "name": "AKI",
+          "image": "/rewards/aki.png",
+          "quantity": 10
+        },
+        {
+          "id": "denji",
+          "name": "DENJI",
+          "image": "/rewards/denji.png",
+          "quantity": 20
+        },
+        {
+          "id": "pochita",
+          "name": "POCHITA",
+          "image": "/rewards/pochita.png",
+          "quantity": 65
+        }
+      ],
+      "createdAt": "2026-06-03T23:39:44.145Z"
+    },
+    {
+      "id": "product_mpypjkof_qeqep",
+      "name": "ハイキュー‼「繋ぐ」エモーショナルライトアップポスターコレクション sideB",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511875162616893440/OnemutanWindbreaker02.jpg?ex=6a220af8&is=6a20b978&hm=e3b1888b19a89d97399d505a8cd8d4e9d794c1d484b706af801a00c2decace90&=&format=webp",
+      "images": [
+        "https://media.discordapp.net/attachments/1511874791534100583/1511875162616893440/OnemutanWindbreaker02.jpg?ex=6a220af8&is=6a20b978&hm=e3b1888b19a89d97399d505a8cd8d4e9d794c1d484b706af801a00c2decace90&=&format=webp"
+      ],
+      "stock": 100,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [
+        {
+          "id": "makima",
+          "name": "MAKIMA",
+          "image": "/rewards/makima.png",
+          "quantity": 1
+        },
+        {
+          "id": "power",
+          "name": "POWER",
+          "image": "/rewards/power.png",
+          "quantity": 4
+        },
+        {
+          "id": "aki",
+          "name": "AKI",
+          "image": "/rewards/aki.png",
+          "quantity": 10
+        },
+        {
+          "id": "denji",
+          "name": "DENJI",
+          "image": "/rewards/denji.png",
+          "quantity": 20
+        },
+        {
+          "id": "pochita",
+          "name": "POCHITA",
+          "image": "/rewards/pochita.png",
+          "quantity": 65
+        }
+      ],
+      "createdAt": "2026-06-03T23:38:42.159Z"
+    },
+    {
+      "id": "product_mpypi0eq_y6gmc",
+      "name": "鬼滅の刃キャラばんちょうこうヘアクリップ壱",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511875227410501654/OnemuKimetsu11.jpg?ex=6a220b07&is=6a20b987&hm=ba0d1e8d4f924b5057b57ca19488d12d2a4d1354704fd833eac8cda6d874a0de&=&format=webp",
+      "images": [
+        "https://media.discordapp.net/attachments/1511874791534100583/1511875227410501654/OnemuKimetsu11.jpg?ex=6a220b07&is=6a20b987&hm=ba0d1e8d4f924b5057b57ca19488d12d2a4d1354704fd833eac8cda6d874a0de&=&format=webp"
+      ],
+      "stock": 98,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [
+        {
+          "id": "makima",
+          "name": "MAKIMA",
+          "image": "/rewards/makima.png",
+          "quantity": 1
+        },
+        {
+          "id": "power",
+          "name": "POWER",
+          "image": "/rewards/power.png",
+          "quantity": 4
+        },
+        {
+          "id": "aki",
+          "name": "AKI",
+          "image": "/rewards/aki.png",
+          "quantity": 10
+        },
+        {
+          "id": "denji",
+          "name": "DENJI",
+          "image": "/rewards/denji.png",
+          "quantity": 20
+        },
+        {
+          "id": "pochita",
+          "name": "POCHITA",
+          "image": "/rewards/pochita.png",
+          "quantity": 63
+        }
+      ],
+      "createdAt": "2026-06-03T23:37:29.234Z"
+    },
+    {
+      "id": "product_mpypgr2f_5cirf",
+      "name": "アニマルアトラクション　しばさんぽ",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511875576020078746/sbsnp_HP01_0528.jpg?ex=6a220b5a&is=6a20b9da&hm=b5590a141359bc7035458fb0d5579660083db87d3ee204e7ae328646559dc8f9&=&format=webp&width=853&height=902",
+      "images": [
+        "https://media.discordapp.net/attachments/1511874791534100583/1511875576020078746/sbsnp_HP01_0528.jpg?ex=6a220b5a&is=6a20b9da&hm=b5590a141359bc7035458fb0d5579660083db87d3ee204e7ae328646559dc8f9&=&format=webp&width=853&height=902"
+      ],
+      "stock": 99,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [
+        {
+          "id": "makima",
+          "name": "MAKIMA",
+          "image": "/rewards/makima.png",
+          "quantity": 1
+        },
+        {
+          "id": "power",
+          "name": "POWER",
+          "image": "/rewards/power.png",
+          "quantity": 4
+        },
+        {
+          "id": "aki",
+          "name": "AKI",
+          "image": "/rewards/aki.png",
+          "quantity": 10
+        },
+        {
+          "id": "denji",
+          "name": "DENJI",
+          "image": "/rewards/denji.png",
+          "quantity": 20
+        },
+        {
+          "id": "pochita",
+          "name": "POCHITA",
+          "image": "/rewards/pochita.png",
+          "quantity": 64
+        }
+      ],
+      "createdAt": "2026-06-03T23:36:30.471Z"
+    },
+    {
+      "id": "product_mpypf5q2_hoyow",
+      "name": "Onemutan Jujutsu Kaisen 0",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511874839265153134/R_OnemuJujutsuGeki400.jpg?ex=6a220aaa&is=6a20b92a&hm=7624ddc942976f03cfd86723001415f5d575fa857027fb90bfb2ef50b1d0b104&=&format=webp",
+      "images": [
+        "https://media.discordapp.net/attachments/1511874791534100583/1511874839265153134/R_OnemuJujutsuGeki400.jpg?ex=6a220aaa&is=6a20b92a&hm=7624ddc942976f03cfd86723001415f5d575fa857027fb90bfb2ef50b1d0b104&=&format=webp"
+      ],
+      "stock": 99,
+      "priceCoin": 59,
+      "status": "open",
+      "type": "random",
+      "categoryId": "gachapon",
+      "description": "",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [
+        {
+          "id": "makima",
+          "name": "MAKIMA",
+          "image": "/rewards/makima.png",
+          "quantity": 1
+        },
+        {
+          "id": "power",
+          "name": "POWER",
+          "image": "/rewards/power.png",
+          "quantity": 4
+        },
+        {
+          "id": "aki",
+          "name": "AKI",
+          "image": "/rewards/aki.png",
+          "quantity": 10
+        },
+        {
+          "id": "denji",
+          "name": "DENJI",
+          "image": "/rewards/denji.png",
+          "quantity": 20
+        },
+        {
+          "id": "pochita",
+          "name": "POCHITA",
+          "image": "/rewards/pochita.png",
+          "quantity": 65
+        }
+      ],
+      "createdAt": "2026-06-03T23:35:16.154Z"
+    },
+    {
+      "id": "product_mpy5bvh9_0qtjm",
+      "name": "ฟิกเกอร์ ของแท้ Jujutsu Kaisen The Culling Game FIGURIZM Megumi Fushiguro Figure",
+      "image": "https://media.discordapp.net/attachments/1409559462733283479/1511781849091932330/2026-06-03_210310.png?ex=6a21b410&is=6a206290&hm=6aacd60db262a3f7144f4a823552e2fa186dbce8363e63e77e63a5ee1f1fe094&=&format=webp&quality=lossless",
+      "images": [
+        "https://media.discordapp.net/attachments/1409559462733283479/1511781849091932330/2026-06-03_210310.png?ex=6a21b410&is=6a206290&hm=6aacd60db262a3f7144f4a823552e2fa186dbce8363e63e77e63a5ee1f1fe094&=&format=webp&quality=lossless"
+      ],
+      "stock": 11,
+      "priceCoin": 450,
+      "status": "open",
+      "type": "sale",
+      "categoryId": "figure",
+      "description": "✨Pre-order✨\n\nJujutsu Kaisen The Culling Game FIGURIZM Megumi Fushiguro Figure\n\nสูง TBA cm\n\n\n***ทางร้านแพคสินค้าอย่างดีทุกกล่อง ห่อบับเบิ้ลกล่อง+ยัดรอบกล่อง+ระวังแตก***\n\nทั้งนี้ขึ้นอยู่กับพนักงานขนส่งในแต่ละพื้นที่ด้วยนะครับ ทางร้านไม่สามารถควบคุมได้จริงๆ\n\nขอบคุณลูกค้าที่อุดหนุนด้วยครับ\n\n\n\nการรับประกัน \n\nสินคือมือ 1 หากแกะกล่องด้านในแล้วพบตำหนิจากโรงงาน เช่น มีรอย สีเพี้ยน ไม่สวย ในกรณีทางร้านไม่รับเคลม\n\nแต่หากกล่องพัสดุเกิดความเสียหายจากขนส่ง กระทบตัวฟิกเกอร์ด้านใน ทางร้านยินดีพิจารณาเป็นเคสๆ \n\nดังนั้นรบกวนลูกค้าถ่ายรูปกล่องพัสดุตอนของถึง และถ่ายวิดีโอขณะแกะพัสดุไว้ด้วยครับ\n\n\n\n📢กรุณาอ่านเพื่อให้เข้าใจตรงกัน\n\n📌การเคลมสินค้า\n\nตามที่แจ้งข้างต้น ทางร้านรับคืนเฉพาะสินค้าที่มีตำหนิแตกหัก ชัดเจน พัสดุอาจจะเสียหายระหว่างขนส่ง หรือตำหนิจากโรงงานก็สามารถเคลมได้ แต่หากเป็นสินค้าที่มีรอยเล็กๆ สีไม่สม่ำเสมอ (ปกติที่สามารถพบเจอได้ในงาน prize) หรือลูกค้าไม่พอใจสินค้าเอง ทางร้านไม่รับเคลมทุกกรณี \n\n📌การให้คะแนนร้านค้า\n\nทางร้านใส่ใจในการแพคสินค้าทุกชิ้น ทุกออเดอร์ แต่หากพัสดุบุบยับโดยเกิดจากขนส่ง เป็นเรื่องที่ทางร้านไม่สามารถควบคุมได้ อยากให้ลูกค้าเข้าใจและไม่หักดาวร้านค้านะครับ รวมถึงตำหนิของสินค้าที่เป็นสาเหตุโดยตรงจากผู้ผลิต (สีถลอก ไม่เรียบ มีรอย และอื่นๆ) อันนี้ไม่เกี่ยวกับทางร้านเลย รบกวนไม่หักคะแนนร้านนะครับ\n\n📌การจัดส่งที่อาจล่าช้า\n\nช่วงแคมเปญของทางช้อปปี้ เช่น 9.9 midmonth pay day และอื่นๆ อาจมีการจัดส่งล่าช้ากว่าปกตินะครับ \n\n❌หากลูกค้าไม่สามารถยอมรับเงื่อนไขข้างต้นนี้ได้ ทางร้านขออนุญาตไม่ทำการซื้อขายอีกต่อไป เพราะถือว่าลูกค้าไม่พอใจและไม่ยินดีในการซื้อขายกับทางร้าน❌",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [],
+      "createdAt": "2026-06-03T14:12:50.589Z"
+    },
+    {
+      "id": "product_mpxdekyu_5h007",
+      "name": "Model Jujutsu Kaisen",
+      "image": "/hero-machine.png",
+      "images": [
+        "/hero-machine.png"
+      ],
+      "stock": 0,
+      "priceCoin": 590,
+      "status": "open",
+      "type": "sale",
+      "categoryId": "figure",
+      "description": "",
+      "badges": [],
+      "pinned": false,
+      "discountDisabled": false,
+      "dropItems": [],
+      "createdAt": "2026-06-03T01:11:07.686Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "gachapon",
+      "label": "กาชาปอง",
+      "createdAt": "2026-06-03T01:00:25.336Z"
+    },
+    {
+      "id": "figure",
+      "label": "ฟิกเกอร์/โมเดล",
+      "createdAt": "2026-06-03T01:00:25.336Z"
+    },
+    {
+      "id": "plush",
+      "label": "ตุ๊กตา",
+      "createdAt": "2026-06-03T01:00:25.336Z"
+    }
+  ],
+  "popupAds": [
+    {
+      "id": "promo_default",
+      "image": "https://media.discordapp.net/attachments/1409559462733283479/1514626651147993208/c6ba998b-3fb7-4b5b-bd29-d0108bfba481.png?ex=6a2c0d7e&is=6a2abbfe&hm=8cd5cfc21a83cdb085d36d85ee05133523e7b7e60ead04da5023cc2d1f83ea9d&=&format=webp&quality=lossless&width=1872&height=655",
+      "title": "โปรโมชันหลัก",
+      "placement": "banner",
+      "dismissHours": 1,
+      "isActive": true,
+      "createdAt": "2026-06-03T01:00:25.336Z"
+    },
+    {
+      "id": "ad_mq9arvti_98pog",
+      "image": "https://media.discordapp.net/attachments/1511874791534100583/1511875576430989463/ofuton_POP_fix.jpg?ex=6a2b45da&is=6a29f45a&hm=8b7a5255de34717c48970641651b98913bdb9a895b27384592f7f0a8624f6cf9&=&format=webp&width=939&height=902",
+      "title": "Gacha Pop Promotion",
+      "placement": "popup",
+      "dismissHours": 1,
+      "isActive": true,
+      "createdAt": "2026-06-11T09:30:43.542Z"
+    }
+  ]
+}

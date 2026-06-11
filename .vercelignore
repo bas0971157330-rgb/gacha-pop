@@ -1,0 +1,15 @@
+.next
+node_modules
+.git
+.vercel
+.agents
+.codex
+
+.env*.local
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+outputs
+work
+.DS_Store
