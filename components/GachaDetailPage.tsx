@@ -234,7 +234,7 @@ export function GachaDetailPage({ gachaId, initialGacha }: GachaDetailPageProps)
     }
   }
 
-  function handleSalePurchase() {
+  async function handleSalePurchase() {
     if (!isSaleProduct) return;
 
     if (!isLoggedIn) {
@@ -248,7 +248,7 @@ export function GachaDetailPage({ gachaId, initialGacha }: GachaDetailPageProps)
     }
 
     try {
-      const purchase = purchaseSaleProduct(currentGacha.id);
+      const purchase = await purchaseSaleProduct(currentGacha.id);
       addRewardToInventory({
         id: purchase.product.id,
         name: purchase.product.name,

@@ -126,7 +126,7 @@ async function createShippingLabel(order: ShippingLabelOrder, requestUrl: string
 }
 
 export async function POST(request: Request) {
-  const webhookUrl = process.env.DISCORD_ORDER_WEBHOOK_URL ?? process.env.DISCORD_WEBHOOK_URL;
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   const shouldSkipDiscord = new URL(request.url).searchParams.get("skipDiscord") === "1";
 
   const body = await request.json().catch(() => null);

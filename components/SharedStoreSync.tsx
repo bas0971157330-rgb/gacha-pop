@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { ensureMockDatabase, syncSharedStoreFromServer } from "@/data/mockDb";
 
-const SHARED_STORE_POLL_MS = 15000;
+const SHARED_STORE_POLL_MS = 30000;
 
 export function SharedStoreSync() {
   useEffect(() => {

@@ -10,7 +10,7 @@ import {
   saveCoupons,
   type CouponRecord,
 } from "@/data/coupons";
-import { DEFAULT_COIN_BALANCE, spendCoins } from "@/data/wallet";
+import { DEFAULT_COIN_BALANCE, saveCoinBalance, spendCoins } from "@/data/wallet";
 
 export type UserRole = "user" | "admin";
 export type ProductStatus = "open" | "closed";
@@ -388,22 +388,11 @@ function coinUpdatedTime(user: Pick<UserRecord, "coinUpdatedAt" | "createdAt">) 
 function mergeUserRecord(current: UserRecord | undefined, incoming: UserRecord) {
   if (!current) return incoming;
 
-  const currentCoinTime = coinUpdatedTime(current);
-  const incomingCoinTime = coinUpdatedTime(incoming);
-  const coinSource =
-    incomingCoinTime > currentCoinTime
-      ? incoming
-      : currentCoinTime > incomingCoinTime
-        ? current
-        : Number(incoming.coins) > Number(current.coins)
-          ? incoming
-          : current;
-
   return {
     ...current,
     ...incoming,
-    coins: Math.max(0, Number(coinSource.coins || 0)),
-    coinUpdatedAt: coinSource.coinUpdatedAt ?? coinSource.createdAt ?? new Date().toISOString(),
+    coins: Math.max(0, Number(incoming.coins ?? current.coins ?? 0)),
+    coinUpdatedAt: incoming.coinUpdatedAt ?? incoming.createdAt ?? current.coinUpdatedAt ?? current.createdAt,
   };
 }
 
@@ -521,24 +510,23 @@ export async function syncSharedStoreFromServer(options: { notify?: boolean; for
     const previousTopupLogs = getTopupLogs();
     const previousRollHistory = getRollHistory();
 
-    const users = mergeUsers(previousUsers, Array.isArray(remoteStore.users) ? remoteStore.users : []);
-    const orders = mergeOrders(previousOrders, Array.isArray(remoteStore.orders) ? remoteStore.orders : []);
-    const notifications = mergeNotifications(
-      previousNotifications,
-      Array.isArray(remoteStore.notifications) ? remoteStore.notifications : [],
-    );
-    const coupons = mergeCoupons(previousCoupons, Array.isArray(remoteStore.coupons) ? remoteStore.coupons : []);
-    const inventories = mergeRecord(
-      previousInventories,
-      normalizeInventoryRecord(remoteStore.inventories && typeof remoteStore.inventories === "object" ? remoteStore.inventories : {}),
-    );
-    const shippingAddresses = mergeRecord(
-      previousShippingAddresses,
-      remoteStore.shippingAddresses && typeof remoteStore.shippingAddresses === "object" ? remoteStore.shippingAddresses : {},
-    );
-    const coinLogs = mergeLogsById(previousCoinLogs, Array.isArray(remoteStore.coinLogs) ? remoteStore.coinLogs : []);
-    const topupLogs = mergeLogsById(previousTopupLogs, Array.isArray(remoteStore.topupLogs) ? remoteStore.topupLogs : []);
-    const rollHistory = mergeLogsById(previousRollHistory, Array.isArray(remoteStore.rollHistory) ? remoteStore.rollHistory : []);
+    const users = Array.isArray(remoteStore.users) ? mergeUsers([], remoteStore.users) : previousUsers;
+    const orders = Array.isArray(remoteStore.orders) ? mergeOrders([], remoteStore.orders) : previousOrders;
+    const notifications = Array.isArray(remoteStore.notifications)
+      ? mergeNotifications([], remoteStore.notifications)
+      : previousNotifications;
+    const coupons = Array.isArray(remoteStore.coupons) ? mergeCoupons([], remoteStore.coupons) : previousCoupons;
+    const inventories =
+      remoteStore.inventories && typeof remoteStore.inventories === "object"
+        ? normalizeInventoryRecord(remoteStore.inventories)
+        : previousInventories;
+    const shippingAddresses =
+      remoteStore.shippingAddresses && typeof remoteStore.shippingAddresses === "object"
+        ? remoteStore.shippingAddresses
+        : previousShippingAddresses;
+    const coinLogs = Array.isArray(remoteStore.coinLogs) ? mergeLogsById([], remoteStore.coinLogs) : previousCoinLogs;
+    const topupLogs = Array.isArray(remoteStore.topupLogs) ? mergeLogsById([], remoteStore.topupLogs) : previousTopupLogs;
+    const rollHistory = Array.isArray(remoteStore.rollHistory) ? mergeLogsById([], remoteStore.rollHistory) : previousRollHistory;
 
     const usersChanged = storeValueChanged(previousUsers, users);
     const ordersChanged = storeValueChanged(previousOrders, orders);
@@ -973,9 +961,43 @@ export function getRollHistory() {
   return readList<RollHistory>(ROLL_HISTORY_STORAGE_KEY);
 }
 
-export function purchaseGachaRoll(productId: string) {
+async function purchaseProductOnServer(userId: string, productId: string, priceCoin: number) {
+  let response: Response;
+
+  try {
+    response = await fetch("/api/purchase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, productId, priceCoin }),
+    });
+  } catch {
+    return null;
+  }
+
+  const data = (await response.json().catch(() => ({}))) as {
+    nextBalance?: number;
+    nextStock?: number;
+    error?: string;
+  };
+
+  if (!response.ok) {
+    const error = String(data.error ?? "PURCHASE_FAILED");
+    if (response.status === 503 || error.includes("SUPABASE_NOT_CONFIGURED")) return null;
+    if (error.includes("INSUFFICIENT_COINS")) throw new Error(`Coin not enough. Need ${priceCoin} Coin`);
+    if (error.includes("INSUFFICIENT_STOCK")) throw new Error("Sold out");
+    throw new Error(error);
+  }
+
+  return {
+    nextBalance: Math.max(0, Number(data.nextBalance ?? 0)),
+    nextStock: Math.max(0, Number(data.nextStock ?? 0)),
+  };
+}
+
+export async function purchaseGachaRoll(productId: string) {
   if (!getCurrentUser()) throw new Error("กรุณาเข้าสู่ระบบก่อนสุ่มสินค้า");
 
+  const currentUser = getCurrentUser()!;
   const products = getProducts();
   const product = products.find((item) => item.id === productId);
 
@@ -985,19 +1007,22 @@ export function purchaseGachaRoll(productId: string) {
   if (product.stock <= 0) throw new Error("สินค้านี้ Sold out แล้ว");
 
   const discount = resolveDiscountedPurchasePrice(product);
-  const nextBalance = spendCoins(discount.priceCoin);
+  const serverPurchase = await purchaseProductOnServer(currentUser.id, productId, discount.priceCoin);
+  const nextBalance = serverPurchase?.nextBalance ?? spendCoins(discount.priceCoin);
   if (nextBalance === null) throw new Error(`Coin ไม่พอ ต้องใช้ ${discount.priceCoin} Coin`);
 
-  const nextProduct = { ...product, stock: Math.max(0, product.stock - 1) };
-  saveProducts(products.map((item) => (item.id === productId ? nextProduct : item)));
+  const nextProduct = { ...product, stock: serverPurchase?.nextStock ?? Math.max(0, product.stock - 1) };
+  if (serverPurchase) saveCoinBalance(nextBalance, { syncRemote: false });
+  saveProducts(products.map((item) => (item.id === productId ? nextProduct : item)), true, !serverPurchase);
   if (discount.coupon) markCouponUsed(discount.coupon.id);
 
   return { product: nextProduct, nextBalance, paidPrice: discount.priceCoin, discountCoupon: discount.coupon };
 }
 
-export function purchaseSaleProduct(productId: string) {
+export async function purchaseSaleProduct(productId: string) {
   if (!getCurrentUser()) throw new Error("กรุณาเข้าสู่ระบบก่อนซื้อสินค้า");
 
+  const currentUser = getCurrentUser()!;
   const products = getProducts();
   const product = products.find((item) => item.id === productId);
 
@@ -1007,11 +1032,13 @@ export function purchaseSaleProduct(productId: string) {
   if (product.stock <= 0) throw new Error("สินค้านี้ Sold out แล้ว");
 
   const discount = resolveDiscountedPurchasePrice(product);
-  const nextBalance = spendCoins(discount.priceCoin);
+  const serverPurchase = await purchaseProductOnServer(currentUser.id, productId, discount.priceCoin);
+  const nextBalance = serverPurchase?.nextBalance ?? spendCoins(discount.priceCoin);
   if (nextBalance === null) throw new Error(`Coin ไม่พอ ต้องใช้ ${discount.priceCoin} Coin`);
 
-  const nextProduct = { ...product, stock: Math.max(0, product.stock - 1) };
-  saveProducts(products.map((item) => (item.id === productId ? nextProduct : item)));
+  const nextProduct = { ...product, stock: serverPurchase?.nextStock ?? Math.max(0, product.stock - 1) };
+  if (serverPurchase) saveCoinBalance(nextBalance, { syncRemote: false });
+  saveProducts(products.map((item) => (item.id === productId ? nextProduct : item)), true, !serverPurchase);
   if (discount.coupon) markCouponUsed(discount.coupon.id);
 
   return { product: nextProduct, nextBalance, paidPrice: discount.priceCoin, discountCoupon: discount.coupon };

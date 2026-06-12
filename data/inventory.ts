@@ -188,12 +188,11 @@ export async function syncInventoryFromServer(userId = getActiveUserId(), option
     const snapshot = (await response.json()) as InventorySharedStoreSnapshot;
     const remoteInventory = normalizeInventory(snapshot.inventories?.[userId] ?? []);
     const localInventory = getInventory(userId);
-    const mergedInventory = mergeInventoryItems([...localInventory, ...remoteInventory]);
+    const nextInventory = remoteInventory.length > 0 ? remoteInventory : localInventory;
 
-    saveInventory(mergedInventory, userId, { syncRemote: false, notify: shouldNotify });
-    if (mergedInventory.length > 0) syncInventoryToSharedStore(userId, mergedInventory);
+    saveInventory(nextInventory, userId, { syncRemote: false, notify: shouldNotify });
 
-    return mergedInventory;
+    return nextInventory;
   } catch {
     return getInventory(userId);
   }

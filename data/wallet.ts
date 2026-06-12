@@ -29,6 +29,14 @@ function syncUsers(users: unknown[]) {
   }).catch(() => undefined);
 }
 
+function syncWalletDeltaToServer(userId: string, delta: number, reason = "") {
+  fetch("/api/wallet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, delta, reason }),
+  }).catch(() => undefined);
+}
+
 function readWalletUsers() {
   try {
     const users = JSON.parse(window.localStorage.getItem(USERS_STORAGE_KEY) ?? "[]") as WalletUser[];
@@ -49,32 +57,10 @@ function coinTimestamp(user: WalletUser) {
 
 function mergeWalletUsers(localUsers: WalletUser[], remoteUsers: WalletUser[]) {
   const userMap = new Map<string, WalletUser>();
-  localUsers.forEach((user) => userMap.set(user.id, user));
+  remoteUsers.forEach((user) => userMap.set(user.id, user));
 
-  remoteUsers.forEach((user) => {
-    const current = userMap.get(user.id);
-    if (!current) {
-      userMap.set(user.id, user);
-      return;
-    }
-
-    const currentCoinTime = coinTimestamp(current);
-    const incomingCoinTime = coinTimestamp(user);
-    const coinSource =
-      incomingCoinTime > currentCoinTime
-        ? user
-        : currentCoinTime > incomingCoinTime
-          ? current
-          : Number(user.coins ?? 0) > Number(current.coins ?? 0)
-            ? user
-            : current;
-
-    userMap.set(user.id, {
-      ...current,
-      ...user,
-      coins: Math.max(0, Number(coinSource.coins ?? 0)),
-      coinUpdatedAt: coinSource.coinUpdatedAt ?? coinSource.createdAt ?? new Date().toISOString(),
-    });
+  localUsers.forEach((user) => {
+    if (!userMap.has(user.id)) userMap.set(user.id, user);
   });
 
   return Array.from(userMap.values());
@@ -104,19 +90,16 @@ export async function syncWalletFromServer(options: { notify?: boolean } = {}) {
     const localUsers = readWalletUsers();
     const mergedUsers = mergeWalletUsers(localUsers, remoteUsers);
     const usersChanged = walletUsersChanged(localUsers, mergedUsers);
-    const currentUser = mergedUsers.find((user) => user.id === userId);
+    const remoteUser = remoteUsers.find((user) => user.id === userId);
+    const currentUser = remoteUser ?? mergedUsers.find((user) => user.id === userId);
     if (!currentUser || !Number.isFinite(Number(currentUser.coins))) {
       const fallbackBalance = getCoinBalance();
-      if (fallbackBalance > 0 && usersChanged) {
-        writeWalletUsers(mergedUsers);
-        syncUsers(mergedUsers);
-      }
+      if (usersChanged) writeWalletUsers(mergedUsers);
       return fallbackBalance;
     }
 
     if (usersChanged) writeWalletUsers(mergedUsers);
     const nextBalance = Math.max(0, Number(currentUser.coins));
-    if (usersChanged) syncUsers(mergedUsers);
     if ((options.notify ?? true) && nextBalance !== previousBalance) {
       window.dispatchEvent(new CustomEvent("gacha-wallet-updated"));
       window.dispatchEvent(new CustomEvent("gacha-users-updated"));
@@ -144,12 +127,13 @@ export function getCoinBalance() {
   return DEFAULT_COIN_BALANCE;
 }
 
-export function saveCoinBalance(balance: number) {
+export function saveCoinBalance(balance: number, options: { syncRemote?: boolean; reason?: string } = {}) {
   if (!canUseStorage()) return;
   const nextBalance = Math.max(0, balance);
   const userId = getActiveUserId();
   const previousBalance = getCoinBalance();
   const coinUpdatedAt = new Date().toISOString();
+  const shouldSyncRemote = options.syncRemote ?? true;
 
   if (!userId) {
     window.dispatchEvent(new CustomEvent("gacha-wallet-updated"));
@@ -164,7 +148,10 @@ export function saveCoinBalance(balance: number) {
         ? users.map((user) => (user.id === userId ? { ...user, coins: nextBalance, coinUpdatedAt } : user))
         : users;
       writeWalletUsers(nextUsers);
-      if (walletUsersChanged(users, nextUsers)) syncUsers(nextUsers);
+      if (shouldSyncRemote && walletUsersChanged(users, nextUsers)) syncUsers(nextUsers);
+      if (shouldSyncRemote) {
+        syncWalletDeltaToServer(userId, nextBalance - previousBalance, options.reason);
+      }
     }
   } catch {
     // The mock wallet still works even if user data is not available yet.

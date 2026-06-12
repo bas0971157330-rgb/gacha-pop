@@ -11,28 +11,44 @@ npm run dev
 
 เปิดเว็บที่ `http://localhost:3000`
 
+## Database
+
+ระบบข้อมูลหลักใช้ Supabase เป็นฐานข้อมูลถาวรสำหรับ user, coin, product, stock, inventory, order, popup ads และ admin settings
+
+1. สร้าง Supabase project
+2. เปิด SQL Editor แล้วรันไฟล์ `supabase/schema.sql`
+3. ตั้งค่า environment variables ตาม `.env.example`
+4. Deploy บน Vercel แล้วเพิ่ม env ชุดเดียวกันใน Project Settings
+
+## Required Environment Variables
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook-id/your-webhook-token
+SHIPPING_LABEL_FONT_PATH=
+```
+
 ## Deploy บน Vercel
 
-1. อัปโหลดโปรเจกต์นี้ขึ้น GitHub
-2. เข้า Vercel แล้วเลือก `Add New Project`
-3. Import repo นี้จาก GitHub
-4. ใช้ค่า default ของ Vercel ได้เลย
-5. กด Deploy
-
-Build command:
+1. Import repo จาก GitHub เข้า Vercel
+2. ตั้งค่า env จาก `.env.example`
+3. ใช้ build command:
 
 ```bash
 npm run build
 ```
 
-หมายเหตุ: ตอนนี้ระบบข้อมูลยังเป็น mock/localStorage เหมาะสำหรับเดโม หากเปิดใช้งานจริงควรต่อฐานข้อมูล เช่น Supabase หรือ Firebase
+4. กด Deploy
 
 ## Discord Order Webhook
 
-ถ้าต้องการให้ Discord แจ้งเตือนเมื่อมีออเดอร์จัดส่งใหม่ ให้เพิ่มค่า env นี้ใน `.env.local` หรือใน Vercel Environment Variables:
+เมื่อผู้ใช้ยืนยันจัดส่ง ระบบจะสร้าง order, สร้าง PDF จ่าหน้าพัสดุ และส่งแจ้งเตือนไป Discord ผ่าน env:
 
 ```bash
-DISCORD_ORDER_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook-id/your-webhook-token
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook-id/your-webhook-token
 ```
 
-หลังตั้งค่าแล้ว เมื่อผู้ใช้กดยืนยันจัดส่งสินค้าในกระเป๋า ระบบจะส่ง Order ID, ผู้ใช้, รายการสินค้า, ผู้รับ, เบอร์โทร และที่อยู่จัดส่งเข้า Discord อัตโนมัติ
+ห้ามใส่ webhook URL ตรงในโค้ด เพื่อให้ปลอดภัยบน GitHub และ Vercel

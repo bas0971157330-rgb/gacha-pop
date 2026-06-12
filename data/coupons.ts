@@ -140,14 +140,15 @@ export function saveCoupons(coupons: CouponRecord[], syncRemote = true, notify =
 export async function syncCouponsFromServer(options: { notify?: boolean; pushLocal?: boolean } = {}) {
   if (!canUseStorage()) return getCoupons();
   const shouldNotify = options.notify ?? true;
-  const shouldPushLocal = options.pushLocal ?? true;
+  const shouldPushLocal = options.pushLocal ?? false;
 
   try {
     const response = await fetch("/api/shared-store", { cache: "no-store" });
     if (!response.ok) return getCoupons();
     const store = (await response.json()) as CouponStoreSnapshot;
     const remoteCoupons = Array.isArray(store.coupons) ? store.coupons : [];
-    const coupons = mergeCoupons(getCoupons(), remoteCoupons);
+    const localCoupons = getCoupons();
+    const coupons = remoteCoupons.length > 0 ? mergeCoupons([], remoteCoupons) : localCoupons;
     saveCoupons(coupons, shouldPushLocal, shouldNotify);
     return coupons;
   } catch {

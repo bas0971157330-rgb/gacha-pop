@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -57,60 +57,74 @@ export function GachaRollPage() {
 
   useEffect(() => {
     const machineId = searchParams.get("machine");
-    if (!machineId) {
-      router.replace("/gacha?category=gachapon");
-      return;
-    }
+    const timers: number[] = [];
+    let cancelled = false;
 
-    if (!getCurrentUser()) {
-      router.replace("/login");
-      return;
-    }
-
-    if (!purchasedRef.current) {
-      try {
-        const purchase = purchaseGachaRoll(machineId);
-        machineNameRef.current = purchase.product.name;
-        if (!rewardRef.current) {
-          const rolledReward = rollFromDropItems(purchase.product.dropItems);
-          rewardRef.current = rolledReward;
-          if (purchase.product.dropItems.length > 0) {
-            consumeProductDropItem(machineId, rolledReward.id);
-          }
-        }
-        purchasedRef.current = true;
-      } catch (error) {
-        window.sessionStorage.setItem("gachaRollError", error instanceof Error ? error.message : "ไม่สามารถสุ่มได้");
-        router.replace(`/gacha/${machineId}`);
+    async function startRoll() {
+      if (!machineId) {
+        router.replace("/gacha?category=gachapon");
         return;
       }
+
+      if (!getCurrentUser()) {
+        router.replace("/login");
+        return;
+      }
+
+      if (!purchasedRef.current) {
+        try {
+          const purchase = await purchaseGachaRoll(machineId);
+          if (cancelled) return;
+
+          machineNameRef.current = purchase.product.name;
+          if (!rewardRef.current) {
+            const rolledReward = rollFromDropItems(purchase.product.dropItems);
+            rewardRef.current = rolledReward;
+            if (purchase.product.dropItems.length > 0) {
+              consumeProductDropItem(machineId, rolledReward.id);
+            }
+          }
+          purchasedRef.current = true;
+        } catch (error) {
+          window.sessionStorage.setItem("gachaRollError", error instanceof Error ? error.message : "Could not roll");
+          router.replace(`/gacha/${machineId}`);
+          return;
+        }
+      }
+
+      if (cancelled) return;
+
+      const color = capsuleColors[Math.floor(Math.random() * capsuleColors.length)];
+      const nextReward = rewardRef.current ?? rollWeightedReward();
+
+      rewardRef.current = nextReward;
+      setCapsuleColor(color);
+      setReward(nextReward);
+      window.sessionStorage.setItem("gachaReward", JSON.stringify(nextReward));
+
+      timers.push(
+        window.setTimeout(() => setStep(2), 650),
+        window.setTimeout(() => setStep(3), 3650),
+        window.setTimeout(() => setStep(4), 4550),
+        window.setTimeout(() => setStep(5), 5650),
+        window.setTimeout(() => {
+          setStep(6);
+          if (!savedToInventoryRef.current) {
+            addRewardToInventory(nextReward);
+            addRollHistory(nextReward.name, machineNameRef.current);
+            savedToInventoryRef.current = true;
+          }
+        }, 6400),
+        window.setTimeout(() => router.push("/gacha/result"), 8200),
+      );
     }
 
-    const color = capsuleColors[Math.floor(Math.random() * capsuleColors.length)];
-    const nextReward = rewardRef.current ?? rollWeightedReward();
+    void startRoll();
 
-    rewardRef.current = nextReward;
-    setCapsuleColor(color);
-    setReward(nextReward);
-    window.sessionStorage.setItem("gachaReward", JSON.stringify(nextReward));
-
-    const timers = [
-      window.setTimeout(() => setStep(2), 650),
-      window.setTimeout(() => setStep(3), 3650),
-      window.setTimeout(() => setStep(4), 4550),
-      window.setTimeout(() => setStep(5), 5650),
-      window.setTimeout(() => {
-        setStep(6);
-        if (!savedToInventoryRef.current) {
-          addRewardToInventory(nextReward);
-          addRollHistory(nextReward.name, machineNameRef.current);
-          savedToInventoryRef.current = true;
-        }
-      }, 6400),
-      window.setTimeout(() => router.push("/gacha/result"), 8200),
-    ];
-
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
+    return () => {
+      cancelled = true;
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
   }, [router, searchParams]);
 
   return (
@@ -128,13 +142,13 @@ export function GachaRollPage() {
 
       <section className="roll-stage" aria-live="polite">
         <p className={`roll-status ${step < 6 ? "roll-status-blink" : ""}`}>
-          {step < 6 ? "กำลังสุ่ม..." : "เปิดรางวัล!"}
+          {step < 6 ? "เธเธณเธฅเธฑเธเธชเธธเนเธก..." : "เน€เธเธดเธ”เธฃเธฒเธเธงเธฑเธฅ!"}
         </p>
 
         <div className={`roll-machine-wrap ${step >= 2 && step < 5 ? "roll-machine-shake" : ""} ${step >= 6 ? "roll-machine-dim" : ""}`}>
           <Image
             src="/hero-machine.png"
-            alt="ตู้กาชาปองกำลังสุ่ม"
+            alt="เธ•เธนเนเธเธฒเธเธฒเธเธญเธเธเธณเธฅเธฑเธเธชเธธเนเธก"
             width={764}
             height={938}
             priority
