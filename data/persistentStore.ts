@@ -294,11 +294,24 @@ function normalizeProduct(product: Partial<ProductRecord>): ProductRecord {
 }
 
 function normalizeCategory(category: Partial<ProductCategoryRecord>): ProductCategoryRecord {
+  const id = toText(category.id, makeId("category"));
+  const defaultCategoryLabels: Record<string, string> = {
+    gachapon: "กาชาปอง",
+    figure: "ฟิกเกอร์/โมเดล",
+    plush: "ตุ๊กตา",
+  };
+  const fallbackLabel = defaultCategoryLabels[id] ?? "หมวดหมู่";
+  const label = toText(category.label, fallbackLabel);
+
   return {
-    id: toText(category.id, makeId("category")),
-    label: toText(category.label, "เธซเธกเธงเธ”เธซเธกเธนเน"),
+    id,
+    label: looksLikeThaiMojibake(label) ? fallbackLabel : label,
     createdAt: toText(category.createdAt, nowIso()),
   };
+}
+
+function looksLikeThaiMojibake(value: string): boolean {
+  return /เธ|เน€|เน|เน/.test(value);
 }
 
 function normalizeAd(ad: Partial<PopupAdRecord>): PopupAdRecord {
@@ -866,19 +879,19 @@ function seedPublicStore(): PublicStoreSnapshot {
         ],
         pinned: false,
         discountDisabled: false,
-        description: "เธฅเธธเนเธเธเธดเธเน€เธเธญเธฃเนเธเธธเธ“เธ เธฒเธเธเธฃเธตเน€เธกเธตเธขเธกเธเธฒเธเธเธญเธฅเน€เธฅเธเธเธฑเธเธเธฒเธเธฒเธเธญเธ เธเธฃเนเธญเธกเน€เธญเธเน€เธเธเธ•เนเธชเธธเนเธกเนเธเธเน€เธ•เนเธกเธเธญ เนเธฅเธฐเธซเธเนเธฒเธเธเธเธฅเธดเธ•เธ เธฑเธ“เธ‘เน",
+        description: "ลุ้นฟิกเกอร์คุณภาพพรีเมียมจากคอลเลกชันกาชาปอง พร้อมเอฟเฟกต์สุ่มแบบเต็มจอ และหน้าปกผลิตภัณฑ์",
         dropItems: [],
         status: "open",
         createdAt: nowIso(),
       }),
     ),
     categories: [
-      { id: "gachapon", label: "เธเธฒเธเธฒเธเธญเธ", createdAt: nowIso() },
-      { id: "figure", label: "เธเธดเธเน€เธเธญเธฃเน/เนเธกเน€เธ”เธฅ", createdAt: nowIso() },
-      { id: "plush", label: "เธ•เธธเนเธเธ•เธฒ", createdAt: nowIso() },
+      { id: "gachapon", label: "กาชาปอง", createdAt: nowIso() },
+      { id: "figure", label: "ฟิกเกอร์/โมเดล", createdAt: nowIso() },
+      { id: "plush", label: "ตุ๊กตา", createdAt: nowIso() },
     ],
     popupAds: [
-      { id: "promo_default", image: "/promo-banner.png", title: "เนเธเธฃเนเธกเธเธฑเนเธเธซเธฅเธฑเธ", placement: "banner", dismissHours: 1, isActive: true, createdAt: nowIso() },
+      { id: "promo_default", image: "/promo-banner.png", title: "โปรโมชันหลัก", placement: "banner", dismissHours: 1, isActive: true, createdAt: nowIso() },
     ],
   };
 }

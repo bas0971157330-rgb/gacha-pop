@@ -142,13 +142,13 @@ export function GachaRollPage() {
 
       <section className="roll-stage" aria-live="polite">
         <p className={`roll-status ${step < 6 ? "roll-status-blink" : ""}`}>
-          {step < 6 ? "เธเธณเธฅเธฑเธเธชเธธเนเธก..." : "เน€เธเธดเธ”เธฃเธฒเธเธงเธฑเธฅ!"}
+          {step < 6 ? "กำลังสุ่ม..." : "เปิดรางวัล!"}
         </p>
 
         <div className={`roll-machine-wrap ${step >= 2 && step < 5 ? "roll-machine-shake" : ""} ${step >= 6 ? "roll-machine-dim" : ""}`}>
           <Image
             src="/hero-machine.png"
-            alt="เธ•เธนเนเธเธฒเธเธฒเธเธญเธเธเธณเธฅเธฑเธเธชเธธเนเธก"
+            alt="ตู้กาชาปองกำลังสุ่ม"
             width={764}
             height={938}
             priority
