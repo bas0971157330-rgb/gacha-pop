@@ -182,18 +182,21 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_user_id text;
+  v_coins integer;
 begin
-  insert into public.wallets (user_id, coins)
+  insert into public.wallets as w (user_id, coins)
   values (target_user_id, 0)
-  on conflict (user_id) do nothing;
+  on conflict on constraint wallets_pkey do nothing;
 
-  update public.wallets
-    set coins = coins + coin_delta,
+  update public.wallets as w
+    set coins = w.coins + coin_delta,
         updated_at = now()
-    where wallets.user_id = target_user_id
-      and coins + coin_delta >= 0
-  returning wallets.user_id, wallets.coins
-  into user_id, coins;
+    where w.user_id = target_user_id
+      and w.coins + coin_delta >= 0
+  returning w.user_id, w.coins
+  into v_user_id, v_coins;
 
   if not found then
     raise exception 'INSUFFICIENT_COINS';
@@ -202,7 +205,7 @@ begin
   insert into public.coin_logs (id, user_id, admin_id, amount, reason, created_at)
   values (gen_random_uuid()::text, target_user_id, '', coin_delta, reason, now());
 
-  return next;
+  return query select v_user_id, v_coins;
 end;
 $$;
 
@@ -215,14 +218,17 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_product_id text;
+  v_stock integer;
 begin
-  update public.products
-    set stock = stock + stock_delta,
+  update public.products as p
+    set stock = p.stock + stock_delta,
         updated_at = now()
-    where id = target_product_id
-      and stock + stock_delta >= 0
-  returning id, stock
-  into product_id, stock;
+    where p.id = target_product_id
+      and p.stock + stock_delta >= 0
+  returning p.id, p.stock
+  into v_product_id, v_stock;
 
   if not found then
     raise exception 'INSUFFICIENT_STOCK';
@@ -231,7 +237,7 @@ begin
   insert into public.stock_movements (product_id, delta, reason)
   values (target_product_id, stock_delta, 'adjustment');
 
-  return next;
+  return query select v_product_id, v_stock;
 end;
 $$;
 
@@ -245,30 +251,35 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  v_user_id text;
+  v_product_id text;
+  v_next_balance integer;
+  v_next_stock integer;
 begin
-  insert into public.wallets (user_id, coins)
+  insert into public.wallets as w (user_id, coins)
   values (target_user_id, 0)
-  on conflict (user_id) do nothing;
+  on conflict on constraint wallets_pkey do nothing;
 
-  update public.wallets
-    set coins = coins - price_coin,
+  update public.wallets as w
+    set coins = w.coins - price_coin,
         updated_at = now()
-    where wallets.user_id = target_user_id
-      and coins >= price_coin
-  returning wallets.user_id, wallets.coins
-  into user_id, next_balance;
+    where w.user_id = target_user_id
+      and w.coins >= price_coin
+  returning w.user_id, w.coins
+  into v_user_id, v_next_balance;
 
   if not found then
     raise exception 'INSUFFICIENT_COINS';
   end if;
 
-  update public.products
-    set stock = stock - 1,
+  update public.products as p
+    set stock = p.stock - 1,
         updated_at = now()
-    where id = target_product_id
-      and stock > 0
-  returning id, stock
-  into product_id, next_stock;
+    where p.id = target_product_id
+      and p.stock > 0
+  returning p.id, p.stock
+  into v_product_id, v_next_stock;
 
   if not found then
     raise exception 'INSUFFICIENT_STOCK';
@@ -277,7 +288,7 @@ begin
   insert into public.stock_movements (product_id, delta, reason)
   values (target_product_id, -1, 'purchase');
 
-  return next;
+  return query select v_user_id, v_product_id, v_next_balance, v_next_stock;
 end;
 $$;
 

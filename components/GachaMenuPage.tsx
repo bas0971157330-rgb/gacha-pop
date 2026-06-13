@@ -3,10 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Home,
-  PackageOpen,
   Gamepad2,
   Heart,
+  Home,
+  PackageOpen,
   type LucideIcon,
 } from "lucide-react";
 import { GachaCard } from "@/components/GachaCard";
@@ -26,16 +26,33 @@ import {
   type ProductRecord,
 } from "@/data/mockDb";
 
-const tabs = [
-  "ทั้งหมด",
-  "ยอดนิยม",
-  "มาใหม่",
-  "กำลังจะหมด",
-] as const;
+const tabs = ["ทั้งหมด", "ยอดนิยม", "มาใหม่", "กำลังจะหมด"] as const;
 
 type Tab = (typeof tabs)[number];
 type ProductCategory = string;
+
 const FAVORITES_STORAGE_KEY = "gacha_favorite_products";
+const DEFAULT_CATEGORY_LABELS: Record<string, string> = {
+  all: "ทั้งหมด",
+  gachapon: "กาชาปอง",
+  figure: "ฟิกเกอร์/โมเดล",
+  plush: "ตุ๊กตา",
+};
+
+function looksLikeThaiMojibake(value: string) {
+  return /เธ|เน€|เน|เน|เน|เน/.test(value);
+}
+
+function normalizeCategoryRecord(category: ProductCategoryRecord): ProductCategoryRecord {
+  const fallbackLabel = DEFAULT_CATEGORY_LABELS[category.id] ?? "หมวดหมู่";
+  const label = String(category.label ?? "").trim();
+  const isBuiltInCategory = Boolean(DEFAULT_CATEGORY_LABELS[category.id]);
+
+  return {
+    ...category,
+    label: isBuiltInCategory || !label || looksLikeThaiMojibake(label) ? fallbackLabel : label,
+  };
+}
 
 function getCategoryIcon(categoryId: string): LucideIcon {
   if (categoryId === "gachapon") return Gamepad2;
@@ -47,6 +64,7 @@ function getCategoryIcon(categoryId: string): LucideIcon {
 function toGachaItem(product: ProductRecord): GachaItem {
   const seed = gachas.find((item) => item.id === product.id);
   const productBadges = product.badges ?? [];
+
   return {
     id: product.id,
     name: product.name,
@@ -75,11 +93,13 @@ function toGachaItem(product: ProductRecord): GachaItem {
 function sortItems(tab: Tab, category: ProductCategory, sourceItems: GachaItem[]) {
   const filteredItems = category === "all" ? sourceItems : sourceItems.filter((item) => item.category === category);
   const items = [...filteredItems].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
+
   if (tab === "ยอดนิยม") return items.filter((item) => item.popular);
   if (tab === "มาใหม่") return items.filter((item) => item.isNew);
   if (tab === "กำลังจะหมด") {
     return items.sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || a.remaining - b.remaining);
   }
+
   return items;
 }
 
@@ -94,12 +114,16 @@ export function GachaMenuPage() {
   const [categories, setCategories] = useState<ProductCategoryRecord[]>([]);
   const [popupAds, setPopupAds] = useState<PopupAdRecord[]>([]);
   const [activeBanner, setActiveBanner] = useState(0);
+
   const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+  const sidebarCategories = useMemo(
+    () => [{ id: "all", label: "ทั้งหมด", createdAt: "" }, ...categories].map(normalizeCategoryRecord),
+    [categories],
+  );
   const items = useMemo(() => {
     const sortedItems = sortItems(activeTab, activeCategory, displayGachas);
     return showFavoritesOnly ? sortedItems.filter((item) => favoriteSet.has(item.id)) : sortedItems;
   }, [activeCategory, activeTab, displayGachas, favoriteSet, showFavoritesOnly]);
-  const sidebarCategories = useMemo(() => [{ id: "all", label: "ทั้งหมด", createdAt: "" }, ...categories], [categories]);
   const bannerAds = useMemo(() => popupAds.filter((ad) => ad.isActive && (ad.placement ?? "banner") === "banner").slice(0, 5), [popupAds]);
   const bannerImages = bannerAds.length > 0 ? bannerAds : [{ id: "fallback", image: "/promo-banner.png", title: "โปรโมชันหลัก", placement: "banner" as const, dismissHours: 1, isActive: true, createdAt: "" }];
   const categoryCounts = useMemo(
@@ -144,13 +168,13 @@ export function GachaMenuPage() {
 
       if (remoteCatalog) {
         saveProducts(remoteCatalog.products, false, false);
-        saveProductCategories(remoteCatalog.categories, false, false);
+        saveProductCategories(remoteCatalog.categories.map(normalizeCategoryRecord), false, false);
         savePopupAds(remoteCatalog.popupAds, false, false);
       }
 
       if (isMounted) {
         setDisplayGachas(products.map(toGachaItem));
-        setCategories(nextCategories);
+        setCategories(nextCategories.map(normalizeCategoryRecord));
         setPopupAds(nextPopupAds);
       }
     }
@@ -159,6 +183,7 @@ export function GachaMenuPage() {
     window.addEventListener("gacha-products-updated", syncProducts);
     window.addEventListener("gacha-categories-updated", syncProducts);
     window.addEventListener("gacha-popup-ads-updated", syncProducts);
+
     return () => {
       isMounted = false;
       window.removeEventListener("gacha-products-updated", syncProducts);
@@ -205,7 +230,7 @@ export function GachaMenuPage() {
                   const Icon = category.id === "all" ? Home : getCategoryIcon(category.id);
                   return (
                     <button
-                      key={category.label}
+                      key={category.id}
                       onClick={() => selectCategory(category.id)}
                       className={`sidebar-item ${activeCategory === category.id ? "sidebar-item-active" : ""}`}
                     >
@@ -217,7 +242,6 @@ export function GachaMenuPage() {
                 })}
               </div>
             </section>
-
           </aside>
 
           <section className="min-w-0">
@@ -276,6 +300,7 @@ export function GachaMenuPage() {
                 />
               ))}
             </div>
+
             {items.length === 0 && (
               <div className="mt-6 rounded-[28px] border border-violet-200 bg-white/75 p-8 text-center shadow-[0_12px_40px_rgba(94,57,177,0.12)] backdrop-blur">
                 <p className="text-2xl font-black text-indigo-950">ยังไม่มีสินค้าในหมวดนี้</p>

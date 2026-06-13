@@ -302,10 +302,11 @@ function normalizeCategory(category: Partial<ProductCategoryRecord>): ProductCat
   };
   const fallbackLabel = defaultCategoryLabels[id] ?? "หมวดหมู่";
   const label = toText(category.label, fallbackLabel);
+  const isBuiltInCategory = Boolean(defaultCategoryLabels[id]);
 
   return {
     id,
-    label: looksLikeThaiMojibake(label) ? fallbackLabel : label,
+    label: isBuiltInCategory || looksLikeThaiMojibake(label) ? fallbackLabel : label,
     createdAt: toText(category.createdAt, nowIso()),
   };
 }
@@ -557,20 +558,21 @@ function rowToProduct(row: DbProductRow): ProductRecord {
 }
 
 function categoryToRow(category: ProductCategoryRecord): DbCategoryRow {
+  const normalizedCategory = normalizeCategory(category);
   return {
-    id: category.id,
-    label: category.label,
-    created_at: category.createdAt,
+    id: normalizedCategory.id,
+    label: normalizedCategory.label,
+    created_at: normalizedCategory.createdAt,
     updated_at: nowIso(),
   };
 }
 
 function rowToCategory(row: DbCategoryRow): ProductCategoryRecord {
-  return {
+  return normalizeCategory({
     id: row.id,
     label: row.label,
     createdAt: row.created_at,
-  };
+  });
 }
 
 function adToRow(ad: PopupAdRecord): DbPopupAdRow {
