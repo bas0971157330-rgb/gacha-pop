@@ -125,25 +125,8 @@ async function createShippingLabel(order: ShippingLabelOrder, requestUrl: string
   return { fileName, pdfBytes, publicUrl };
 }
 
-export async function POST(request: Request) {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  const shouldSkipDiscord = new URL(request.url).searchParams.get("skipDiscord") === "1";
-
-  const body = await request.json().catch(() => null);
-  const order = ((body as { order?: DiscordOrderPayload } | null)?.order ?? body) as DiscordOrderPayload | null;
-
-  if (!order || typeof order !== "object") {
-    return NextResponse.json({ ok: false, error: "Invalid order payload" }, { status: 400 });
-  }
-
-  const normalizedOrder = normalizeOrder(order);
-  const shippingLabel = await createShippingLabel(normalizedOrder, request.url);
-
-  if (!webhookUrl || shouldSkipDiscord) {
-    return NextResponse.json({ ok: true, skipped: true, shippingLabelUrl: shippingLabel.publicUrl });
-  }
-
-  const payload = {
+function buildDiscordPayload(order: DiscordOrderPayload, shippingLabel: { fileName: string; publicUrl: string }) {
+  return {
     username: "Gacha Pop Orders",
     allowed_mentions: { parse: [] },
     embeds: [
@@ -169,6 +152,35 @@ export async function POST(request: Request) {
       },
     ],
   };
+}
+
+export async function POST(request: Request) {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL?.trim();
+  const shouldSkipDiscord = new URL(request.url).searchParams.get("skipDiscord") === "1";
+
+  const body = await request.json().catch(() => null);
+  const order = ((body as { order?: DiscordOrderPayload } | null)?.order ?? body) as DiscordOrderPayload | null;
+
+  if (!order || typeof order !== "object") {
+    return NextResponse.json({ ok: false, error: "Invalid order payload" }, { status: 400 });
+  }
+
+  const normalizedOrder = normalizeOrder(order);
+  const shippingLabel = await createShippingLabel(normalizedOrder, request.url);
+
+  if (shouldSkipDiscord) {
+    return NextResponse.json({ ok: true, skipped: true, shippingLabelUrl: shippingLabel.publicUrl });
+  }
+
+  if (!webhookUrl) {
+    console.warn("DISCORD_WEBHOOK_URL is not configured; skipping Discord order notification.");
+    return NextResponse.json(
+      { ok: false, error: "DISCORD_WEBHOOK_URL is not configured", shippingLabelUrl: shippingLabel.publicUrl },
+      { status: 500 },
+    );
+  }
+
+  const payload = buildDiscordPayload(order, shippingLabel);
 
   const formData = new FormData();
   const pdfFileBytes = new Uint8Array(shippingLabel.pdfBytes.length);
