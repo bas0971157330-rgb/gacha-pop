@@ -16,16 +16,20 @@ npm run dev
 ระบบข้อมูลหลักใช้ Supabase เป็นฐานข้อมูลถาวรสำหรับ user, coin, product, stock, inventory, order, popup ads และ admin settings
 
 1. สร้าง Supabase project
-2. เปิด SQL Editor แล้วรันไฟล์ `supabase/schema.sql`
+2. เปิด SQL Editor แล้วรัน migration `supabase/migrations/20260613_supabase_persistence.sql`
 3. ตั้งค่า environment variables ตาม `.env.example`
 4. Deploy บน Vercel แล้วเพิ่ม env ชุดเดียวกันใน Project Settings
 
 ## Required Environment Variables
 
 ```bash
+SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+SUPABASE_SECRET_KEY=your-supabase-secret-key
+SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/your-webhook-id/your-webhook-token
 SHIPPING_LABEL_FONT_PATH=

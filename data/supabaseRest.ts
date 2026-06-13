@@ -4,7 +4,9 @@ type SupabaseRequestOptions = RequestInit & {
 
 export class SupabaseConfigError extends Error {
   constructor() {
-    super("Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.");
+    super(
+      "Supabase is not configured. Set SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY.",
+    );
     this.name = "SupabaseConfigError";
   }
 }
@@ -14,13 +16,40 @@ function cleanEnv(value: string | undefined) {
   return nextValue && !nextValue.includes("your-") ? nextValue : "";
 }
 
+function firstEnv(...keys: string[]) {
+  for (const key of keys) {
+    const value = cleanEnv(process.env[key]);
+    if (value) return value;
+  }
+  return "";
+}
+
+export function getSupabaseUrl() {
+  return firstEnv("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL")?.replace(/\/+$/, "");
+}
+
+export function getSupabaseServerKey() {
+  return firstEnv("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY");
+}
+
+export function getSupabasePublicConfig() {
+  const url = firstEnv("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL")?.replace(/\/+$/, "");
+  const publishableKey = firstEnv(
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "SUPABASE_PUBLISHABLE_KEY",
+  );
+
+  return { url, publishableKey };
+}
+
 export function isSupabaseConfigured() {
-  return Boolean(cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) && cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY));
+  return Boolean(getSupabaseUrl() && getSupabaseServerKey());
 }
 
 function getSupabaseConfig() {
-  const url = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL)?.replace(/\/+$/, "");
-  const serviceRoleKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const url = getSupabaseUrl();
+  const serviceRoleKey = getSupabaseServerKey();
 
   if (!url || !serviceRoleKey) throw new SupabaseConfigError();
   return { url, serviceRoleKey };
