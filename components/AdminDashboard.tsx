@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { UrlImage } from "@/components/UrlImage";
-import { fetchCatalogSnapshot, saveCatalogSnapshot } from "@/data/catalogSync";
+import { deleteCatalogRecord, fetchCatalogSnapshot } from "@/data/catalogSync";
 import {
   COUPONS_STORAGE_KEY,
   createCoupon,
@@ -284,35 +284,13 @@ export function AdminDashboard() {
     const remoteCatalog = await fetchCatalogSnapshot();
     if (!remoteCatalog) return;
 
-    const localProducts = getProducts();
-    const localCategories = getProductCategories();
-    const localAds = getPopupAds();
-    const productMap = new Map<string, ProductRecord>();
-    localProducts.forEach((product) => productMap.set(product.id, product));
-    remoteCatalog.products.forEach((product) => productMap.set(product.id, product));
-
-    const categoryMap = new Map<string, ProductCategoryRecord>();
-    localCategories.forEach((category) => categoryMap.set(category.id, category));
-    remoteCatalog.categories.forEach((category) => categoryMap.set(category.id, category));
-
-    const adMap = new Map<string, PopupAdRecord>();
-    localAds.forEach((ad) => adMap.set(ad.id, ad));
-    remoteCatalog.popupAds.forEach((ad) => adMap.set(ad.id, ad));
-
-    const nextProducts = Array.from(productMap.values());
-    const nextCategories = Array.from(categoryMap.values());
-    const nextAds = Array.from(adMap.values()).slice(0, 5);
+    const nextProducts = remoteCatalog.products;
+    const nextCategories = remoteCatalog.categories;
+    const nextAds = remoteCatalog.popupAds.slice(0, 5);
 
     saveProducts(nextProducts, false, false);
     saveProductCategories(nextCategories, false, false);
     savePopupAds(nextAds, false, false);
-
-    const hasLocalOnlyProduct = nextProducts.length !== remoteCatalog.products.length;
-    const hasLocalOnlyCategory = nextCategories.length !== remoteCatalog.categories.length;
-    const hasLocalOnlyAd = nextAds.length !== remoteCatalog.popupAds.length;
-    if (hasLocalOnlyProduct || hasLocalOnlyCategory || hasLocalOnlyAd) {
-      await saveCatalogSnapshot({ products: nextProducts, categories: nextCategories, popupAds: nextAds });
-    }
   }
 
   function refresh() {
@@ -623,10 +601,17 @@ export function AdminDashboard() {
     refresh();
   }
 
-  function deleteProduct(productId: string) {
-    saveProducts(products.filter((product) => product.id !== productId));
+  async function deleteProduct(productId: string) {
+    const nextProducts = products.filter((product) => product.id !== productId);
+    saveProducts(nextProducts, false, false);
+    const remoteCatalog = await deleteCatalogRecord("product", productId);
+    if (remoteCatalog) {
+      saveProducts(remoteCatalog.products, false, false);
+      saveProductCategories(remoteCatalog.categories, false, false);
+      savePopupAds(remoteCatalog.popupAds, false, false);
+    }
     refresh();
-    showToast("ลบสินค้าแล้ว");
+    showToast("Product deleted");
   }
 
   function addCategory(event: FormEvent<HTMLFormElement>) {
@@ -654,14 +639,20 @@ export function AdminDashboard() {
     showToast("เพิ่มหมวดหมู่แล้ว");
   }
 
-  function deleteCategory(categoryId: string) {
+  async function deleteCategory(categoryId: string) {
     if (products.some((product) => product.categoryId === categoryId)) {
-      showToast("หมวดหมู่นี้มีสินค้าอยู่ กรุณาย้ายสินค้าก่อนลบ");
+      showToast("Move products before deleting this category");
       return;
     }
-    saveProductCategories(categories.filter((category) => category.id !== categoryId));
+    saveProductCategories(categories.filter((category) => category.id !== categoryId), false, false);
+    const remoteCatalog = await deleteCatalogRecord("category", categoryId);
+    if (remoteCatalog) {
+      saveProducts(remoteCatalog.products, false, false);
+      saveProductCategories(remoteCatalog.categories, false, false);
+      savePopupAds(remoteCatalog.popupAds, false, false);
+    }
     refresh();
-    showToast("ลบหมวดหมู่แล้ว");
+    showToast("Category deleted");
   }
 
   function addPopupAd(event: FormEvent<HTMLFormElement>) {
@@ -696,10 +687,16 @@ export function AdminDashboard() {
     refresh();
   }
 
-  function deletePopupAd(adId: string) {
-    savePopupAds(popupAds.filter((ad) => ad.id !== adId));
+  async function deletePopupAd(adId: string) {
+    savePopupAds(popupAds.filter((ad) => ad.id !== adId), false, false);
+    const remoteCatalog = await deleteCatalogRecord("popupAd", adId);
+    if (remoteCatalog) {
+      saveProducts(remoteCatalog.products, false, false);
+      saveProductCategories(remoteCatalog.categories, false, false);
+      savePopupAds(remoteCatalog.popupAds, false, false);
+    }
     refresh();
-    showToast("ลบรูปโฆษณาแล้ว");
+    showToast("Popup ad deleted");
   }
 
   function submitCoupon(event: FormEvent<HTMLFormElement>) {

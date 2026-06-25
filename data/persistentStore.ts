@@ -15,7 +15,7 @@ import type {
   ProductCategoryRecord,
   PopupAdRecord,
 } from "@/data/mockDb";
-import { callRpc, isSupabaseConfigured, selectRows, supabaseRequest, upsertRows } from "@/data/supabaseRest";
+import { callRpc, deleteRowsByColumn, isSupabaseConfigured, selectRows, supabaseRequest, upsertRows } from "@/data/supabaseRest";
 
 type DbUserRow = {
   id: string;
@@ -324,17 +324,29 @@ function normalizeCategory(category: Partial<ProductCategoryRecord>): ProductCat
   };
   const fallbackLabel = defaultCategoryLabels[id] ?? "หมวดหมู่";
   const label = toText(category.label, fallbackLabel);
+  const repairedLabel = repairLatin1ThaiMojibake(label);
   const isBuiltInCategory = Boolean(defaultCategoryLabels[id]);
 
   return {
     id,
-    label: isBuiltInCategory || looksLikeThaiMojibake(label) ? fallbackLabel : label,
+    label: isBuiltInCategory || looksLikeThaiMojibake(repairedLabel) ? fallbackLabel : repairedLabel,
     createdAt: toText(category.createdAt, nowIso()),
   };
 }
 
 function looksLikeThaiMojibake(value: string): boolean {
-  return /เธ|เน€|เน|เน/.test(value);
+  return /เธ|เน€|เน|เน|à¸|à¹|Â|Ã/.test(value);
+}
+
+function repairLatin1ThaiMojibake(value: string): string {
+  if (!/[àÂÃ]/.test(value)) return value;
+  try {
+    const bytes = Uint8Array.from(Array.from(value).map((char) => char.charCodeAt(0) & 0xff));
+    const repaired = new TextDecoder("utf-8", { fatal: false }).decode(bytes).trim();
+    return /[\u0E00-\u0E7F]/.test(repaired) ? repaired : value;
+  } catch {
+    return value;
+  }
 }
 
 function normalizeAd(ad: Partial<PopupAdRecord>): PopupAdRecord {
@@ -840,14 +852,17 @@ async function upsertUsers(users: UserRecord[]) {
 
 async function upsertPublicStore(store: Partial<PublicStoreSnapshot>) {
   if (!isSupabaseConfigured()) return;
-  if (store.products && store.products.length > 0) {
-    await upsertRows("products", store.products.map(productToRow), "id");
+  if (store.products) {
+    const productRows = store.products.map(productToRow);
+    await upsertRows("products", productRows, "id");
   }
-  if (store.categories && store.categories.length > 0) {
-    await upsertRows("product_categories", store.categories.map(categoryToRow), "id");
+  if (store.categories) {
+    const categoryRows = store.categories.map(categoryToRow);
+    await upsertRows("product_categories", categoryRows, "id");
   }
-  if (store.popupAds && store.popupAds.length > 0) {
-    await upsertRows("popup_ads", store.popupAds.map(adToRow), "id");
+  if (store.popupAds) {
+    const adRows = store.popupAds.map(adToRow);
+    await upsertRows("popup_ads", adRows, "id");
   }
 }
 
@@ -958,6 +973,17 @@ export async function savePublicStoreToDatabase(store: Partial<PublicStoreSnapsh
     categories: store.categories?.map(normalizeCategory),
     popupAds: store.popupAds?.map(normalizeAd),
   });
+}
+
+export async function deletePublicStoreRecord(kind: "product" | "category" | "popupAd", id: string) {
+  if (!isSupabaseConfigured()) return;
+  const tableByKind = {
+    product: "products",
+    category: "product_categories",
+    popupAd: "popup_ads",
+  } satisfies Record<typeof kind, string>;
+
+  await deleteRowsByColumn(tableByKind[kind], "id", id);
 }
 
 export async function getSharedStoreFromDatabase(): Promise<SharedStoreSnapshot> {

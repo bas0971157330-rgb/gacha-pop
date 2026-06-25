@@ -36,6 +36,7 @@ async function getShippingLabelFontBytes() {
 
   const fontPaths = [
     process.env.SHIPPING_LABEL_FONT_PATH,
+    join(process.cwd(), "public", "fonts", "NotoSansThai-Regular.ttf"),
     join(process.cwd(), "public", "fonts", "AngsanaNew.ttf"),
     join(process.cwd(), "public", "fonts", "AngsanaNew.ttc"),
     "C:\\Windows\\Fonts\\angsana.ttc",

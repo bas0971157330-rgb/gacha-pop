@@ -101,6 +101,27 @@ export async function upsertRows<T extends Record<string, unknown>>(
   });
 }
 
+function restListValue(value: string) {
+  return encodeURIComponent(String(value).replace(/"/g, '\\"'));
+}
+
+export async function deleteRowsNotIn(table: string, column: string, keepValues: string[]) {
+  const filter =
+    keepValues.length > 0
+      ? `${encodeURIComponent(column)}=not.in.(${keepValues.map(restListValue).join(",")})`
+      : `${encodeURIComponent(column)}=not.is.null`;
+
+  return supabaseRequest<null>(`/rest/v1/${table}?${filter}`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteRowsByColumn(table: string, column: string, value: string) {
+  return supabaseRequest<null>(`/rest/v1/${table}?${encodeURIComponent(column)}=eq.${restListValue(value)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function callRpc<T>(functionName: string, body: Record<string, unknown>) {
   return supabaseRequest<T>(`/rest/v1/rpc/${functionName}`, {
     method: "POST",

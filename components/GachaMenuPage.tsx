@@ -40,17 +40,29 @@ const DEFAULT_CATEGORY_LABELS: Record<string, string> = {
 };
 
 function looksLikeThaiMojibake(value: string) {
-  return /เธ|เน€|เน|เน|เน|เน/.test(value);
+  return /เธ|เน€|เน|เน|เน|เน|à¸|à¹|Â|Ã/.test(value);
+}
+
+function repairLatin1ThaiMojibake(value: string) {
+  if (!/[àÂÃ]/.test(value)) return value;
+  try {
+    const bytes = Uint8Array.from(Array.from(value).map((char) => char.charCodeAt(0) & 0xff));
+    const repaired = new TextDecoder("utf-8", { fatal: false }).decode(bytes).trim();
+    return /[\u0E00-\u0E7F]/.test(repaired) ? repaired : value;
+  } catch {
+    return value;
+  }
 }
 
 function normalizeCategoryRecord(category: ProductCategoryRecord): ProductCategoryRecord {
   const fallbackLabel = DEFAULT_CATEGORY_LABELS[category.id] ?? "หมวดหมู่";
   const label = String(category.label ?? "").trim();
+  const repairedLabel = repairLatin1ThaiMojibake(label);
   const isBuiltInCategory = Boolean(DEFAULT_CATEGORY_LABELS[category.id]);
 
   return {
     ...category,
-    label: isBuiltInCategory || !label || looksLikeThaiMojibake(label) ? fallbackLabel : label,
+    label: isBuiltInCategory || !repairedLabel || looksLikeThaiMojibake(repairedLabel) ? fallbackLabel : repairedLabel,
   };
 }
 

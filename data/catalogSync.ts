@@ -29,3 +29,17 @@ export async function saveCatalogSnapshot(snapshot: Partial<CatalogSnapshot>) {
     return null;
   }
 }
+
+export async function deleteCatalogRecord(kind: "product" | "category" | "popupAd", id: string) {
+  try {
+    const response = await fetch("/api/public-store", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind, id }),
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as CatalogSnapshot;
+  } catch {
+    return null;
+  }
+}
