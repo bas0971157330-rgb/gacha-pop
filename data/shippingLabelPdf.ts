@@ -453,51 +453,51 @@ export function generateShippingLabelPdf(order: ShippingLabelOrder, fontBytes?: 
   rect(1, 1, PAGE_WIDTH - 2, PAGE_HEIGHT - 2, { stroke: true });
   fillColor(0, 0, 0);
 
-  text("ผู้ส่ง: Gacha Pop", 12, 395, 17, true);
-  text("ที่อยู่ร้าน หมู่บ้านเปรมประชาเลคแอนด์พาร์ค ซอย3 4/56", 12, 376, 15);
-  text("ต.บางกระสั้น อ.บางปะอิน จ.พระนครศรีอยุธยา 13160", 12, 358, 15);
-  text("เบอร์โทร 0904114622", 12, 340, 15);
+  text("ผู้ส่ง: Gacha Pop", 12, 394, 10.8, true);
+  text("ที่อยู่ร้าน หมู่บ้านเปรมประชาเลคแอนด์พาร์ค ซอย3 4/56", 12, 379, 9.8);
+  text("ต.บางกระสั้น อ.บางปะอิน จ.พระนครศรีอยุธยา 13160", 12, 364, 9.8);
+  text("เบอร์โทร 0904114622", 12, 349, 9.8);
 
   strokeColor(0, 0, 0);
   lineWidth(1.35);
-  rect(11, 216, 261, 110, { stroke: true });
-  text(`ผู้รับ: ${wrapText(receiverName, 26, 1)[0] || "-"}`, 17, 304, 17, true);
-  text(orderId, 214, 304, 19, true);
+  rect(11, 248, 261, 90, { stroke: true });
+  text(`ผู้รับ: ${wrapText(receiverName, 31, 1)[0] || "-"}`, 17, 320, 11.5, true);
+  text(orderId, 214, 320, 12.8, true);
 
-  wrapText(address, 44, 3).forEach((lineText, index) => {
-    text(lineText, 17, 282 - index * 18, 15);
+  wrapText(address, 48, 4).forEach((lineText, index) => {
+    text(lineText, 17, 302 - index * 14, 9.8);
   });
-  text(phone, 17, 222, 17, true);
+  text(phone, 17, 256, 11.5, true);
 
-  text("#", 12, 190, 13, true);
-  text("ชื่อสินค้า", 31, 190, 13, true);
-  text("ชื่อแบบสินค้า", 188, 190, 13, true);
-  text("จำนวน", 250, 190, 13, true);
+  text("#", 12, 220, 9.8, true);
+  text("ชื่อสินค้า", 31, 220, 9.8, true);
+  text("ชื่อแบบสินค้า", 180, 220, 9.8, true);
+  text("จำนวน", 250, 220, 9.8, true);
   strokeColor(0.82, 0.82, 0.82);
   lineWidth(0.8);
-  line(12, 181, 272, 181);
-  line(26, 197, 26, 94);
-  line(184, 197, 184, 94);
-  line(244, 197, 244, 94);
+  line(12, 212, 272, 212);
+  line(26, 226, 26, 126);
+  line(176, 226, 176, 126);
+  line(244, 226, 244, 126);
 
   if (items.length === 0) {
-    text("-", 31, 165, 14);
+    text("-", 31, 197, 10);
   }
 
   items.slice(0, 4).forEach((item, index) => {
-    const y = 165 - index * 19;
-    const productName = wrapText(item.name, 31, 1)[0] || "-";
-    const variantName = wrapText(item.variantName, 13, 1)[0] || "Figure";
+    const y = 197 - index * 16;
+    const productName = wrapText(item.name, 28, 1)[0] || "-";
+    const variantName = wrapText(item.variantName, 12, 1)[0] || "Figure";
     const quantity = Math.max(1, Number(item.quantity ?? 1));
 
-    text(`${index + 1}.`, 12, y, 14);
-    text(productName, 31, y, 14);
-    text(variantName, 190, y, 14);
-    text(String(quantity), 256, y, 14, true);
+    text(`${index + 1}.`, 12, y, 10);
+    text(productName, 31, y, 10);
+    text(variantName, 180, y, 10);
+    text(String(quantity), 256, y, 10, true);
   });
 
-  text(`Print Time: ${formatPrintTime(order.createdAt ?? new Date())}`, 12, 17, 11);
-  text("ร้านคุณภาพที่ใช้งาน Gacha Pop", 162, 17, 11);
+  text(`Print Time: ${formatPrintTime(order.createdAt ?? new Date())}`, 12, 17, 7.7);
+  text("ร้านคุณภาพที่ใช้งาน Gacha Pop", 154, 17, 7.7);
 
   const contentBytes = textBytes(content.join("\n"));
 
