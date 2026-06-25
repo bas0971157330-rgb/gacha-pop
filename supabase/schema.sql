@@ -317,6 +317,15 @@ grant select, insert, update, delete on table
 to service_role;
 grant usage, select on all sequences in schema public to service_role;
 
+insert into public.product_categories (id, label, created_at, updated_at)
+values
+  ('gachapon', 'กาชาปอง', now(), now()),
+  ('figure', 'ฟิกเกอร์/โมเดล', now(), now()),
+  ('plush', 'ตุ๊กตา', now(), now())
+on conflict (id) do update
+set label = excluded.label,
+    updated_at = now();
+
 alter table public.users enable row level security;
 alter table public.wallets enable row level security;
 alter table public.product_categories enable row level security;

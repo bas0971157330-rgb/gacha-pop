@@ -15,7 +15,7 @@ import type {
   ProductCategoryRecord,
   PopupAdRecord,
 } from "@/data/mockDb";
-import { callRpc, isSupabaseConfigured, selectRows, upsertRows } from "@/data/supabaseRest";
+import { callRpc, isSupabaseConfigured, selectRows, supabaseRequest, upsertRows } from "@/data/supabaseRest";
 
 type DbUserRow = {
   id: string;
@@ -162,6 +162,28 @@ type DbCouponRow = {
   used_by_user_ids: string[] | null;
   created_at: string;
   expires_at: string | null;
+};
+
+type WalletRpcRow = {
+  user_id: string;
+  coins: number;
+};
+
+type StockRpcRow = {
+  product_id: string;
+  stock: number;
+};
+
+type PurchaseRpcRow = {
+  user_id: string;
+  product_id: string;
+  next_balance: number;
+  next_stock: number;
+};
+
+type ProductStockRow = {
+  id: string;
+  stock: number;
 };
 
 export type SharedStoreSnapshot = {
@@ -1011,26 +1033,192 @@ export async function saveSharedStoreToDatabase(store: Partial<SharedStoreSnapsh
   });
 }
 
-export async function adjustWalletBalanceAtomic(userId: string, delta: number, reason = "") {
-  return callRpc<{ user_id: string; coins: number }>("adjust_wallet_balance", {
-    target_user_id: userId,
-    coin_delta: delta,
-    reason,
+function isBrokenAtomicRpcError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("42702") || message.toLowerCase().includes("ambiguous");
+}
+
+function restEq(value: string) {
+  return encodeURIComponent(value);
+}
+
+async function getWalletForUpdate(userId: string) {
+  const query = `select=user_id,coins,updated_at&user_id=eq.${restEq(userId)}&limit=1`;
+  const rows = await selectRows<DbWalletRow>("wallets", query);
+  if (rows[0]) return rows[0];
+
+  await supabaseRequest<DbWalletRow[]>("/rest/v1/wallets", {
+    method: "POST",
+    prefer: "return=representation",
+    body: JSON.stringify([{ user_id: userId, coins: 0, updated_at: nowIso() }]),
+  }).catch((error) => {
+    const message = error instanceof Error ? error.message : String(error ?? "");
+    if (!message.includes("23505") && !message.includes("duplicate")) throw error;
   });
+
+  const createdRows = await selectRows<DbWalletRow>("wallets", query);
+  if (!createdRows[0]) throw new Error("WALLET_NOT_FOUND");
+  return createdRows[0];
+}
+
+async function updateWalletWithExpectedCoins(userId: string, currentCoins: number, nextCoins: number) {
+  return supabaseRequest<DbWalletRow[]>(
+    `/rest/v1/wallets?user_id=eq.${restEq(userId)}&coins=eq.${currentCoins}`,
+    {
+      method: "PATCH",
+      prefer: "return=representation",
+      body: JSON.stringify({ coins: nextCoins, updated_at: nowIso() }),
+    },
+  );
+}
+
+async function getProductStockForUpdate(productId: string) {
+  const rows = await selectRows<ProductStockRow>(
+    "products",
+    `select=id,stock&id=eq.${restEq(productId)}&limit=1`,
+  );
+  if (!rows[0]) throw new Error("PRODUCT_NOT_FOUND");
+  return rows[0];
+}
+
+async function updateProductStockWithExpectedStock(productId: string, currentStock: number, nextStock: number) {
+  return supabaseRequest<ProductStockRow[]>(
+    `/rest/v1/products?id=eq.${restEq(productId)}&stock=eq.${currentStock}`,
+    {
+      method: "PATCH",
+      prefer: "return=representation",
+      body: JSON.stringify({ stock: nextStock, updated_at: nowIso() }),
+    },
+  );
+}
+
+async function logStockMovement(productId: string, delta: number, reason: string) {
+  await supabaseRequest<null>("/rest/v1/stock_movements", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: JSON.stringify([{ product_id: productId, delta, reason }]),
+  }).catch(() => undefined);
+}
+
+async function logCoinMovement(userId: string, delta: number, reason: string) {
+  await supabaseRequest<null>("/rest/v1/coin_logs", {
+    method: "POST",
+    prefer: "return=minimal",
+    body: JSON.stringify([
+      {
+        id: makeId("coin"),
+        user_id: userId,
+        admin_id: "",
+        amount: delta,
+        reason,
+        created_at: nowIso(),
+      },
+    ]),
+  }).catch(() => undefined);
+}
+
+async function adjustWalletBalanceViaRestFallback(userId: string, delta: number, reason = ""): Promise<WalletRpcRow> {
+  const wallet = await getWalletForUpdate(userId);
+  const currentCoins = Math.max(0, Number(wallet.coins ?? 0));
+  const nextCoins = currentCoins + delta;
+  if (nextCoins < 0) throw new Error("INSUFFICIENT_COINS");
+
+  const updatedRows = await updateWalletWithExpectedCoins(userId, currentCoins, nextCoins);
+  const updated = updatedRows[0];
+  if (!updated) throw new Error("WALLET_CONFLICT_RETRY");
+
+  await logCoinMovement(userId, delta, reason);
+  return { user_id: userId, coins: Number(updated.coins ?? nextCoins) };
+}
+
+async function adjustProductStockViaRestFallback(productId: string, delta: number): Promise<StockRpcRow> {
+  const product = await getProductStockForUpdate(productId);
+  const currentStock = Math.max(0, Number(product.stock ?? 0));
+  const nextStock = currentStock + delta;
+  if (nextStock < 0) throw new Error("INSUFFICIENT_STOCK");
+
+  const updatedRows = await updateProductStockWithExpectedStock(productId, currentStock, nextStock);
+  const updated = updatedRows[0];
+  if (!updated) throw new Error("STOCK_CONFLICT_RETRY");
+
+  await logStockMovement(productId, delta, "adjustment-fallback");
+  return { product_id: productId, stock: Number(updated.stock ?? nextStock) };
+}
+
+async function purchaseProductViaRestFallback(userId: string, productId: string, priceCoin: number): Promise<PurchaseRpcRow> {
+  const wallet = await getWalletForUpdate(userId);
+  const product = await getProductStockForUpdate(productId);
+  const currentCoins = Math.max(0, Number(wallet.coins ?? 0));
+  const currentStock = Math.max(0, Number(product.stock ?? 0));
+
+  if (currentCoins < priceCoin) throw new Error("INSUFFICIENT_COINS");
+  if (currentStock <= 0) throw new Error("INSUFFICIENT_STOCK");
+
+  const nextStock = currentStock - 1;
+  const productRows = await updateProductStockWithExpectedStock(productId, currentStock, nextStock);
+  const updatedProduct = productRows[0];
+  if (!updatedProduct) throw new Error("INSUFFICIENT_STOCK");
+
+  const nextBalance = currentCoins - priceCoin;
+  const walletRows = await updateWalletWithExpectedCoins(userId, currentCoins, nextBalance);
+  const updatedWallet = walletRows[0];
+  if (!updatedWallet) {
+    await updateProductStockWithExpectedStock(productId, nextStock, currentStock).catch(() => undefined);
+    throw new Error("INSUFFICIENT_COINS");
+  }
+
+  await logStockMovement(productId, -1, "purchase-fallback");
+  await logCoinMovement(userId, -priceCoin, "purchase-fallback");
+
+  return {
+    user_id: userId,
+    product_id: productId,
+    next_balance: Number(updatedWallet.coins ?? nextBalance),
+    next_stock: Number(updatedProduct.stock ?? nextStock),
+  };
+}
+
+export async function adjustWalletBalanceAtomic(userId: string, delta: number, reason = "") {
+  try {
+    return await callRpc<WalletRpcRow>("adjust_wallet_balance", {
+      target_user_id: userId,
+      coin_delta: delta,
+      reason,
+    });
+  } catch (error) {
+    if (isBrokenAtomicRpcError(error)) {
+      return adjustWalletBalanceViaRestFallback(userId, delta, reason);
+    }
+    throw error;
+  }
 }
 
 export async function adjustProductStockAtomic(productId: string, delta: number) {
-  return callRpc<{ product_id: string; stock: number }>("adjust_product_stock", {
-    target_product_id: productId,
-    stock_delta: delta,
-  });
+  try {
+    return await callRpc<StockRpcRow>("adjust_product_stock", {
+      target_product_id: productId,
+      stock_delta: delta,
+    });
+  } catch (error) {
+    if (isBrokenAtomicRpcError(error)) {
+      return adjustProductStockViaRestFallback(productId, delta);
+    }
+    throw error;
+  }
 }
 
 export async function purchaseProductAtomic(userId: string, productId: string, priceCoin: number) {
-  return callRpc<{ user_id: string; product_id: string; next_balance: number; next_stock: number }>("purchase_product_atomic", {
-    target_user_id: userId,
-    target_product_id: productId,
-    price_coin: priceCoin,
-  });
+  try {
+    return await callRpc<PurchaseRpcRow>("purchase_product_atomic", {
+      target_user_id: userId,
+      target_product_id: productId,
+      price_coin: priceCoin,
+    });
+  } catch (error) {
+    if (isBrokenAtomicRpcError(error)) {
+      return purchaseProductViaRestFallback(userId, productId, priceCoin);
+    }
+    throw error;
+  }
 }
 
