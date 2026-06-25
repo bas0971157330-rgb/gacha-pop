@@ -103,12 +103,28 @@ function formatAddress(address: ShippingAddress) {
     .join(" ");
 }
 
-function notifyDiscordOrder(order: OrderRecord) {
-  fetch("/api/discord-order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ order }),
-  }).catch(() => undefined);
+async function notifyDiscordOrder(order: OrderRecord, attempt = 1): Promise<boolean> {
+  try {
+    const response = await fetch("/api/discord-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order }),
+    });
+
+    if (response.ok) return true;
+
+    const errorText = await response.text().catch(() => "");
+    console.warn("Discord order notification failed", response.status, errorText);
+  } catch (error) {
+    console.warn("Discord order notification request failed", error);
+  }
+
+  if (attempt < 2) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return notifyDiscordOrder(order, attempt + 1);
+  }
+
+  return false;
 }
 
 export function InventoryPage() {

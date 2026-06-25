@@ -197,7 +197,17 @@ export async function POST(request: Request) {
   });
 
   if (!response.ok) {
-    return NextResponse.json({ ok: false, error: "Discord webhook failed" }, { status: 502 });
+    const detail = await response.text().catch(() => "");
+    console.error("Discord webhook failed", response.status, detail);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Discord webhook failed",
+        status: response.status,
+        detail: detail.slice(0, 500),
+      },
+      { status: 502 },
+    );
   }
 
   const discordMessage = await response.json().catch(() => null);
