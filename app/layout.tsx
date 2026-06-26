@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Pridi } from "next/font/google";
+import { AppLoadingOverlay } from "@/components/AppLoadingOverlay";
 import { SharedStoreSync } from "@/components/SharedStoreSync";
 import "./globals.css";
 
@@ -62,6 +63,7 @@ export default function RootLayout({
     <html lang="th" suppressHydrationWarning>
       <body className={pridi.variable}>
         <SharedStoreSync />
+        <AppLoadingOverlay />
         {children}
       </body>
     </html>

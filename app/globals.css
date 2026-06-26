@@ -24,6 +24,151 @@ body {
   font-feature-settings: "liga" 1, "kern" 1;
 }
 
+.app-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.18), transparent 22rem),
+    linear-gradient(135deg, #5e20d8 0%, #8d35f0 42%, #a84cff 100%);
+  color: white;
+}
+
+.app-loading-content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  transform: translateY(-10px);
+}
+
+.app-loading-logo {
+  width: min(260px, 52vw);
+  height: auto;
+  filter: drop-shadow(0 18px 40px rgba(37, 9, 87, 0.32));
+  animation: app-loading-pop 1.2s ease-in-out infinite alternate;
+}
+
+.app-loading-text {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: clamp(1.35rem, 4vw, 2.2rem);
+  font-weight: 800;
+  text-shadow: 0 4px 14px rgba(37, 9, 87, 0.3);
+}
+
+.app-loading-text::before,
+.app-loading-text::after {
+  content: "✦";
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1.1em;
+  animation: app-loading-twinkle 1.1s ease-in-out infinite alternate;
+}
+
+.app-loading-dots {
+  display: flex;
+  gap: 14px;
+}
+
+.app-loading-dots span {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  animation: app-loading-dot 1s ease-in-out infinite;
+}
+
+.app-loading-dots span:nth-child(2) {
+  background: white;
+  animation-delay: 0.16s;
+}
+
+.app-loading-dots span:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+.app-loading-shape,
+.app-loading-star {
+  position: absolute;
+  pointer-events: none;
+}
+
+.app-loading-shape {
+  width: 270px;
+  height: 270px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.app-loading-shape-left {
+  left: -70px;
+  bottom: -110px;
+  box-shadow: 120px 70px 0 rgba(255, 255, 255, 0.08);
+}
+
+.app-loading-shape-right {
+  right: -80px;
+  bottom: -95px;
+  box-shadow: -120px 60px 0 rgba(255, 255, 255, 0.08);
+}
+
+.app-loading-star {
+  width: 44px;
+  height: 44px;
+  opacity: 0.16;
+  transform: rotate(45deg);
+  border-radius: 12px;
+  background: white;
+  clip-path: polygon(50% 0%, 64% 35%, 100% 50%, 64% 65%, 50% 100%, 36% 65%, 0% 50%, 36% 35%);
+}
+
+.app-loading-star-one {
+  top: 12%;
+  left: 17%;
+}
+
+.app-loading-star-two {
+  top: 18%;
+  right: 9%;
+}
+
+@keyframes app-loading-pop {
+  from {
+    transform: translateY(0) scale(0.98);
+  }
+  to {
+    transform: translateY(-6px) scale(1.02);
+  }
+}
+
+@keyframes app-loading-twinkle {
+  from {
+    transform: scale(0.85) rotate(0deg);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.08) rotate(12deg);
+    opacity: 1;
+  }
+}
+
+@keyframes app-loading-dot {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;

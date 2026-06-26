@@ -15,9 +15,7 @@ import { fetchCatalogSnapshot } from "@/data/catalogSync";
 import { gachas, type GachaItem } from "@/data/gacha";
 import {
   ensureMockDatabase,
-  getPopupAds,
   getProductCategories,
-  getProducts,
   savePopupAds,
   saveProductCategories,
   saveProducts,
@@ -122,7 +120,7 @@ export function GachaMenuPage() {
   const [activeCategory, setActiveCategory] = useState<ProductCategory>("all");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
-  const [displayGachas, setDisplayGachas] = useState<GachaItem[]>(gachas);
+  const [displayGachas, setDisplayGachas] = useState<GachaItem[]>([]);
   const [categories, setCategories] = useState<ProductCategoryRecord[]>([]);
   const [popupAds, setPopupAds] = useState<PopupAdRecord[]>([]);
   const [activeBanner, setActiveBanner] = useState(0);
@@ -137,7 +135,7 @@ export function GachaMenuPage() {
     return showFavoritesOnly ? sortedItems.filter((item) => favoriteSet.has(item.id)) : sortedItems;
   }, [activeCategory, activeTab, displayGachas, favoriteSet, showFavoritesOnly]);
   const bannerAds = useMemo(() => popupAds.filter((ad) => ad.isActive && (ad.placement ?? "banner") === "banner").slice(0, 5), [popupAds]);
-  const bannerImages = bannerAds.length > 0 ? bannerAds : [{ id: "fallback", image: "/promo-banner.png", title: "โปรโมชันหลัก", placement: "banner" as const, dismissHours: 1, isActive: true, createdAt: "" }];
+  const bannerImages = bannerAds.length > 0 ? bannerAds : [];
   const categoryCounts = useMemo(
     () =>
       sidebarCategories.reduce<Record<string, number>>((acc, category) => {
@@ -174,9 +172,9 @@ export function GachaMenuPage() {
     async function syncProducts() {
       await ensureMockDatabase();
       const remoteCatalog = await fetchCatalogSnapshot();
-      const products = remoteCatalog?.products ?? getProducts();
+      const products = remoteCatalog?.products ?? [];
       const nextCategories = remoteCatalog?.categories ?? getProductCategories();
-      const nextPopupAds = remoteCatalog?.popupAds ?? getPopupAds();
+      const nextPopupAds = remoteCatalog?.popupAds ?? [];
 
       if (remoteCatalog) {
         saveProducts(remoteCatalog.products, false, false);
@@ -257,26 +255,25 @@ export function GachaMenuPage() {
           </aside>
 
           <section className="min-w-0">
-            <div className="promo-banner">
-              <div className="promo-banner-track" style={{ transform: `translateX(-${activeBanner * 100}%)` }}>
-                {bannerImages.map((ad) => (
-                  <img
-                    key={ad.id}
-                    src={ad.image || "/promo-banner.png"}
-                    alt={ad.title || "Gacha Pop promotion"}
-                    className="promo-banner-image"
-                    onError={(event) => {
-                      event.currentTarget.src = "/promo-banner.png";
-                    }}
-                  />
-                ))}
+            {bannerImages.length > 0 && (
+              <div className="promo-banner">
+                <div className="promo-banner-track" style={{ transform: `translateX(-${activeBanner * 100}%)` }}>
+                  {bannerImages.map((ad) => (
+                    <img
+                      key={ad.id}
+                      src={ad.image}
+                      alt={ad.title || "Gacha Pop promotion"}
+                      className="promo-banner-image"
+                    />
+                  ))}
+                </div>
+                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+                  {bannerImages.map((ad, dot) => (
+                    <span key={ad.id} className={`h-3 w-3 rounded-full ${dot === activeBanner ? "bg-violet-600" : "bg-white"}`} />
+                  ))}
+                </div>
               </div>
-              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                {bannerImages.map((ad, dot) => (
-                  <span key={ad.id} className={`h-3 w-3 rounded-full ${dot === activeBanner ? "bg-violet-600" : "bg-white"}`} />
-                ))}
-              </div>
-            </div>
+            )}
 
             <div className="gacha-filter-bar mt-6 rounded-[28px] bg-white/70 p-3 shadow-[0_12px_40px_rgba(94,57,177,0.12)] backdrop-blur">
               <div className="gacha-filter-scroll scrollbar-hide">
@@ -316,7 +313,7 @@ export function GachaMenuPage() {
             {items.length === 0 && (
               <div className="mt-6 rounded-[28px] border border-violet-200 bg-white/75 p-8 text-center shadow-[0_12px_40px_rgba(94,57,177,0.12)] backdrop-blur">
                 <p className="text-2xl font-black text-indigo-950">ยังไม่มีสินค้าในหมวดนี้</p>
-                <p className="mt-2 font-bold text-violet-600">เดี๋ยวค่อยเพิ่มสินค้าใหม่เข้ามาได้เลย</p>
+                <p className="mt-2 font-bold text-violet-600">ลองเลือกหมวดหมู่อื่น หรือกลับมาดูใหม่ภายหลัง</p>
               </div>
             )}
           </section>

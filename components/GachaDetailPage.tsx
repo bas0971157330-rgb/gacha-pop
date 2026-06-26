@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Clock3, Dice5, Gift, Heart, History, ShoppingBag, Sparkles, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { UrlImage } from "@/components/UrlImage";
+import { fetchCatalogSnapshot } from "@/data/catalogSync";
 import { addRewardToInventory } from "@/data/inventory";
 import { gachas, type GachaItem } from "@/data/gacha";
 import {
@@ -13,6 +14,7 @@ import {
   getProducts,
   getRollHistory,
   getSafeUsers,
+  saveProducts,
   purchaseSaleProduct,
   type ProductRecord,
   type RollHistory,
@@ -127,7 +129,11 @@ export function GachaDetailPage({ gachaId, initialGacha }: GachaDetailPageProps)
 
     async function syncProduct() {
       await ensureMockDatabase();
-      const product = getProducts().find((item) => item.id === gachaId);
+      const remoteCatalog = await fetchCatalogSnapshot();
+      if (remoteCatalog) {
+        saveProducts(remoteCatalog.products, false, false);
+      }
+      const product = (remoteCatalog?.products ?? getProducts()).find((item) => item.id === gachaId);
       if (!isMounted) return;
       setIsLoggedIn(Boolean(getCurrentUser()));
       setCoins(getCoinBalance());

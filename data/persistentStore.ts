@@ -901,43 +901,23 @@ async function upsertSharedStore(store: Partial<SharedStoreSnapshot>) {
 
 function seedPublicStore(): PublicStoreSnapshot {
   return {
-    products: gachas.map((gacha) =>
-      normalizeProduct({
-        id: gacha.id,
-        name: gacha.name,
-        image: gacha.coverImage ?? "/hero-machine.png",
-        images: gacha.coverImage ? [gacha.coverImage] : ["/hero-machine.png"],
-        stock: gacha.remaining,
-        priceCoin: gacha.price,
-        type: "random",
-        categoryId: gacha.category,
-        badges: [
-          ...(gacha.popular ? (["popular"] as ProductBadge[]) : []),
-          ...(gacha.isNew || gacha.badge === "NEW" ? (["new"] as ProductBadge[]) : []),
-          ...(gacha.limited || gacha.badge === "LIMITED" ? (["ending"] as ProductBadge[]) : []),
-        ],
-        pinned: false,
-        discountDisabled: false,
-        description: "ลุ้นฟิกเกอร์คุณภาพพรีเมียมจากคอลเลกชันกาชาปอง พร้อมเอฟเฟกต์สุ่มแบบเต็มจอ และหน้าปกผลิตภัณฑ์",
-        dropItems: [],
-        status: "open",
-        createdAt: nowIso(),
-      }),
-    ),
+    products: [],
     categories: [
       { id: "gachapon", label: "กาชาปอง", createdAt: nowIso() },
       { id: "figure", label: "ฟิกเกอร์/โมเดล", createdAt: nowIso() },
       { id: "plush", label: "ตุ๊กตา", createdAt: nowIso() },
     ],
-    popupAds: [
-      { id: "promo_default", image: "/promo-banner.png", title: "โปรโมชันหลัก", placement: "banner", dismissHours: 1, isActive: true, createdAt: nowIso() },
-    ],
+    popupAds: [],
   };
 }
 
 export async function getPublicStoreFromDatabase(): Promise<PublicStoreSnapshot> {
   if (!isSupabaseConfigured()) {
-    return seedPublicStore();
+    return {
+      products: [],
+      categories: seedPublicStore().categories,
+      popupAds: [],
+    };
   }
 
   const [products, categories, popupAds] = await Promise.all([
@@ -947,14 +927,8 @@ export async function getPublicStoreFromDatabase(): Promise<PublicStoreSnapshot>
   ]);
 
   const normalizedProducts = products.length > 0 ? products.map(rowToProduct) : [];
-  const normalizedCategories = categories.length > 0 ? categories.map(rowToCategory) : [];
+  const normalizedCategories = categories.length > 0 ? categories.map(rowToCategory) : seedPublicStore().categories;
   const normalizedPopupAds = popupAds.length > 0 ? popupAds.map(rowToAd) : [];
-
-  if (normalizedProducts.length === 0 || normalizedCategories.length === 0 || normalizedPopupAds.length === 0) {
-    const seed = await getPublicStoreFromDatabaseFallback();
-    await savePublicStoreToDatabase(seed).catch(() => undefined);
-    return seed;
-  }
 
   return {
     products: normalizedProducts,
@@ -964,7 +938,11 @@ export async function getPublicStoreFromDatabase(): Promise<PublicStoreSnapshot>
 }
 
 async function getPublicStoreFromDatabaseFallback(): Promise<PublicStoreSnapshot> {
-  return seedPublicStore();
+  return {
+    products: [],
+    categories: seedPublicStore().categories,
+    popupAds: [],
+  };
 }
 export async function savePublicStoreToDatabase(store: Partial<PublicStoreSnapshot>) {
   if (!isSupabaseConfigured()) return;

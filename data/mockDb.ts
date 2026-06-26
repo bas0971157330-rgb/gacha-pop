@@ -833,20 +833,7 @@ export function saveProductCategories(categories: ProductCategoryRecord[], notif
 export function getPopupAds() {
   const ads = readList<PopupAdRecord>(POPUP_ADS_STORAGE_KEY);
   if (ads.length > 0) return ads.map(normalizePopupAd);
-
-  const seededAds: PopupAdRecord[] = [
-    {
-      id: "promo_default",
-      image: "/promo-banner.png",
-      title: "โปรโมชันหลัก",
-      placement: "banner",
-      dismissHours: 1,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    },
-  ];
-  writeList(POPUP_ADS_STORAGE_KEY, seededAds);
-  return seededAds;
+  return [];
 }
 
 function normalizePopupAd(ad: Partial<PopupAdRecord>): PopupAdRecord {
@@ -874,30 +861,7 @@ export function savePopupAds(ads: PopupAdRecord[], notify = true, syncRemote = t
 export function getProducts() {
   const products = readList<Partial<ProductRecord>>(PRODUCTS_STORAGE_KEY);
   if (products.length > 0) return products.map(normalizeProduct);
-
-  const seededProducts = gachas.map((gacha) => ({
-    id: gacha.id,
-    name: gacha.name,
-    image: gacha.coverImage ?? "/hero-machine.png",
-    images: gacha.coverImage ? [gacha.coverImage] : ["/hero-machine.png"],
-    stock: gacha.remaining,
-    priceCoin: gacha.price,
-    type: "random" as ProductType,
-    categoryId: gacha.category,
-    badges: [
-      ...(gacha.popular ? (["popular"] as ProductBadge[]) : []),
-      ...(gacha.isNew || gacha.badge === "NEW" ? (["new"] as ProductBadge[]) : []),
-      ...(gacha.limited || gacha.badge === "LIMITED" ? (["ending"] as ProductBadge[]) : []),
-    ],
-    pinned: false,
-    discountDisabled: false,
-    description: "ลุ้นฟิกเกอร์สุดน่ารักจากคอลเลกชันพิเศษ พร้อมเอฟเฟกต์สุ่มแบบเต็มจอ",
-    dropItems: [],
-    status: "open" as const,
-    createdAt: new Date().toISOString(),
-  }));
-  writeList(PRODUCTS_STORAGE_KEY, seededProducts);
-  return seededProducts;
+  return [];
 }
 
 export function saveProducts(products: ProductRecord[], notify = true, syncRemote = true) {

@@ -5,7 +5,6 @@ import { PromoPopup } from "@/components/PromoPopup";
 import { fetchCatalogSnapshot } from "@/data/catalogSync";
 import {
   ensureMockDatabase,
-  getPopupAds,
   savePopupAds,
   type PopupAdRecord,
 } from "@/data/mockDb";
@@ -19,7 +18,7 @@ export function HomePromoPopup() {
     async function syncPopupAds() {
       await ensureMockDatabase();
       const remoteCatalog = await fetchCatalogSnapshot();
-      const nextAds = remoteCatalog?.popupAds ?? getPopupAds();
+      const nextAds = remoteCatalog?.popupAds ?? [];
 
       if (remoteCatalog) {
         savePopupAds(remoteCatalog.popupAds, false, false);

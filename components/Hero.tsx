@@ -3,9 +3,35 @@
 import Image from "next/image";
 import Link from "next/link";
 import { LockKeyhole, ShieldCheck, Truck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { FeatureCard } from "@/components/FeatureCard";
+import { fetchCatalogSnapshot } from "@/data/catalogSync";
 
 export function Hero() {
+  const [startingPrice, setStartingPrice] = useState(59);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function syncStartingPrice() {
+      const catalog = await fetchCatalogSnapshot();
+      if (!isMounted || !catalog) return;
+
+      const lowestPrice = catalog.products
+        .filter((product) => product.status === "open" && Number(product.stock) > 0 && Number(product.priceCoin) > 0)
+        .reduce((lowest, product) => Math.min(lowest, Number(product.priceCoin)), Number.POSITIVE_INFINITY);
+
+      setStartingPrice(Number.isFinite(lowestPrice) ? lowestPrice : 59);
+    }
+
+    syncStartingPrice();
+    window.addEventListener("gacha-products-updated", syncStartingPrice);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("gacha-products-updated", syncStartingPrice);
+    };
+  }, []);
+
   return (
     <main className="relative overflow-hidden">
       <div className="sparkle-field" />
@@ -21,8 +47,7 @@ export function Hero() {
             className="hero-logo-art"
           />
           <p className="hero-description">
-            ลุ้นฟิกเกอร์ ของสะสม และของน่ารักจากญี่ปุ่น ของแท้ 100%
-            พร้อมจัดส่งถึงมือคุณ
+            ลุ้นฟิกเกอร์ ของสะสม และของน่ารักจากญี่ปุ่น ของแท้ 100% พร้อมจัดส่งถึงมือคุณ
           </p>
 
           <div className="hero-features">
@@ -35,7 +60,7 @@ export function Hero() {
         <div className="hero-art-panel">
           <div className="hero-price-card">
             <p className="text-sm font-medium">เริ่มต้นเพียง</p>
-            <p className="text-6xl font-semibold leading-none">59</p>
+            <p className="text-6xl font-semibold leading-none">{startingPrice.toLocaleString("th-TH")}</p>
             <p className="text-sm font-medium">Coin / ครั้ง</p>
           </div>
           <Image

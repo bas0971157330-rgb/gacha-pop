@@ -50,7 +50,6 @@ import {
 } from "@/data/coupons";
 import { type ProductBadge, type ProductDropItem, type ProductType } from "@/data/gacha";
 import { markInventoryItemsForOrderStatus } from "@/data/inventory";
-import { rollRewards } from "@/data/rewards";
 import {
   addCoinsToUser,
   adminResetPassword,
@@ -153,7 +152,7 @@ const emptyProductForm: ProductFormState = {
   name: "",
   image: "",
   stock: "10",
-  priceCoin: "59",
+  priceCoin: "",
   status: "open",
   type: "random",
   categoryId: "gachapon",
@@ -162,14 +161,6 @@ const emptyProductForm: ProductFormState = {
   pinned: false,
   discountDisabled: false,
 };
-
-const defaultDropItems = (): ProductDropItem[] =>
-  rollRewards.map((reward) => ({
-    id: reward.id,
-    name: reward.name,
-    image: reward.image,
-    quantity: Math.max(1, Math.round(reward.chance)),
-  }));
 
 function makeId(prefix: string) {
   const randomPart =
@@ -258,7 +249,7 @@ export function AdminDashboard() {
   const [productForm, setProductForm] = useState<ProductFormState>(emptyProductForm);
   const [productImages, setProductImages] = useState<string[]>([]);
   const [productImageUrl, setProductImageUrl] = useState("");
-  const [dropItems, setDropItems] = useState<ProductDropItem[]>(defaultDropItems);
+  const [dropItems, setDropItems] = useState<ProductDropItem[]>([]);
   const [categoryName, setCategoryName] = useState("");
   const [adForm, setAdForm] = useState<{ title: string; image: string; placement: PopupAdPlacement; isActive: boolean }>({
     title: "",
@@ -435,7 +426,7 @@ export function AdminDashboard() {
     setProductForm(emptyProductForm);
     setProductImages([]);
     setProductImageUrl("");
-    setDropItems(defaultDropItems());
+    setDropItems([]);
   }
 
   function setProductCoverImage(image: string) {
@@ -528,6 +519,12 @@ export function AdminDashboard() {
       return;
     }
 
+    const priceCoin = Number(productForm.priceCoin);
+    if (!Number.isFinite(priceCoin) || priceCoin <= 0) {
+      showToast("กรุณากรอกราคา Coin ให้ถูกต้อง");
+      return;
+    }
+
     const duplicateProduct = products.find(
       (product) =>
         product.id !== editingProductId &&
@@ -551,7 +548,7 @@ export function AdminDashboard() {
       image: productGalleryImages[0] ?? "/hero-machine.png",
       images: productGalleryImages,
       stock: productStock,
-      priceCoin: Math.max(1, Number(productForm.priceCoin)),
+      priceCoin: Math.max(1, priceCoin),
       status: productForm.status,
       type: productForm.type,
       categoryId: productForm.categoryId || categories[0]?.id || "gachapon",
@@ -591,7 +588,7 @@ export function AdminDashboard() {
     });
     setProductImages(galleryImages.slice(1));
     setProductImageUrl("");
-    setDropItems(product.dropItems.length > 0 ? product.dropItems : defaultDropItems());
+    setDropItems(product.dropItems.length > 0 ? product.dropItems : []);
     setActiveSection("products");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }

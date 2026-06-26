@@ -10,8 +10,14 @@ const defaultReward = rollRewards[1];
 
 export function GachaResultPage() {
   const [reward, setReward] = useState<RollReward>(defaultReward);
+  const [returnPath, setReturnPath] = useState("/gacha?category=gachapon");
 
   useEffect(() => {
+    const storedReturnPath = window.sessionStorage.getItem("gachaReturnPath");
+    if (storedReturnPath?.startsWith("/gacha/")) {
+      setReturnPath(storedReturnPath);
+    }
+
     const storedReward = window.sessionStorage.getItem("gachaReward");
     if (!storedReward) return;
 
@@ -48,7 +54,7 @@ export function GachaResultPage() {
         <h1>{reward.name}</h1>
         <div className="result-stars" aria-label={`${reward.stars} ดาว`}>
           {Array.from({ length: reward.stars }).map((_, index) => (
-            <span key={index}>⭐</span>
+            <span key={index}>★</span>
           ))}
         </div>
 
@@ -57,7 +63,7 @@ export function GachaResultPage() {
             <Backpack size={24} />
             ดูในกระเป๋า
           </Link>
-          <Link href="/gacha" className="result-button result-button-purple">
+          <Link href={returnPath} className="result-button result-button-purple">
             <Store size={24} />
             กลับไปหน้าตู้
           </Link>

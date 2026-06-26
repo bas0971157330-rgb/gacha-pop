@@ -65,6 +65,7 @@ export function GachaRollPage() {
         router.replace("/gacha?category=gachapon");
         return;
       }
+      window.sessionStorage.setItem("gachaReturnPath", `/gacha/${machineId}`);
 
       if (!getCurrentUser()) {
         router.replace("/login");
@@ -115,7 +116,7 @@ export function GachaRollPage() {
             savedToInventoryRef.current = true;
           }
         }, 6400),
-        window.setTimeout(() => router.push("/gacha/result"), 8200),
+        window.setTimeout(() => router.push(`/gacha/result?machine=${machineId}`), 8200),
       );
     }
 
