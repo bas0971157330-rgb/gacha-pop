@@ -5,6 +5,8 @@ create table if not exists public.users (
   username text not null unique,
   email text not null unique,
   pin text not null,
+  phone text not null default '',
+  avatar_url text not null default '/avatars/hamster.png',
   password_hash text not null,
   role text not null default 'user' check (role in ('user', 'admin')),
   suspended boolean not null default false,

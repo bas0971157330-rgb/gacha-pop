@@ -489,6 +489,16 @@ header.sticky {
   box-shadow: 0 8px 20px rgba(120, 73, 190, 0.22);
 }
 
+.avatar-pixel img,
+.profile-mini-avatar img,
+.profile-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
 .coin-wallet {
   display: inline-flex;
   position: relative;
@@ -1070,13 +1080,17 @@ header.sticky {
 }
 
 .gacha-card-title {
+  display: -webkit-box;
+  min-height: 2.48em;
   overflow: hidden;
   color: #24145d;
-  font-size: 0.82rem;
+  font-size: clamp(0.74rem, 0.82vw, 0.88rem);
   font-weight: 800;
-  line-height: 1.22;
+  line-height: 1.24;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .gacha-card-subtitle {
@@ -1845,11 +1859,15 @@ header.sticky {
 }
 
 .detail-copy h1 {
+  display: -webkit-box;
   max-width: 690px;
+  overflow: hidden;
   color: white;
-  font-size: clamp(3.1rem, 6vw, 5.4rem);
+  font-size: clamp(2.35rem, 5vw, 4.4rem);
   font-weight: 700;
-  line-height: 0.98;
+  line-height: 1;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   text-shadow:
     0 5px 0 #4f28b4,
     0 9px 0 #2d147b,
@@ -7886,7 +7904,10 @@ video {
   }
 
   .gacha-card-title {
+    min-height: 2.44em;
     font-size: 0.78rem;
+    white-space: normal;
+    -webkit-line-clamp: 2;
   }
 
   .gacha-card-price-value {
@@ -7928,7 +7949,8 @@ video {
   }
 
   .detail-copy h1 {
-    font-size: clamp(2rem, 11vw, 3.1rem);
+    font-size: clamp(1.95rem, 9vw, 2.65rem);
+    line-height: 1.04;
     text-shadow: 0 4px 0 #4f28b4, 0 8px 18px rgba(68, 34, 141, 0.24);
   }
 
@@ -8933,10 +8955,10 @@ video {
 
   .gacha-card-title {
     display: -webkit-box;
-    min-height: 0;
+    min-height: 2.44em;
     overflow: hidden;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: 2;
     font-size: 0.7rem;
     line-height: 1.22;
   }
@@ -9086,6 +9108,81 @@ video {
   border: 1px solid rgba(205, 188, 248, 0.74);
   font-family: inherit;
   cursor: pointer;
+}
+
+.profile-avatar button {
+  z-index: 2;
+}
+
+.profile-avatar-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(40, 20, 80, 0.28);
+  backdrop-filter: blur(12px);
+}
+
+.profile-avatar-picker-close-layer {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profile-avatar-picker {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 460px);
+  border: 1px solid rgba(207, 178, 255, 0.86);
+  border-radius: 28px;
+  padding: 1.1rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 64px rgba(82, 44, 160, 0.28);
+}
+
+.profile-avatar-picker h3 {
+  margin: 0 0 0.85rem;
+  color: #4a22a5;
+  font-size: 1.15rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.profile-avatar-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.profile-avatar-option {
+  display: grid;
+  aspect-ratio: 1 / 1;
+  place-items: center;
+  border: 2px solid rgba(188, 154, 255, 0.62);
+  border-radius: 22px;
+  padding: 0.18rem;
+  background: rgba(250, 246, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(112, 70, 180, 0.12);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-avatar-option:hover,
+.profile-avatar-option.is-active {
+  transform: translateY(-2px);
+  border-color: #ec55b6;
+  box-shadow: 0 14px 30px rgba(197, 64, 177, 0.22);
+}
+
+.profile-avatar-option img {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  object-fit: cover;
 }
 
 .profile-mobile-logout {

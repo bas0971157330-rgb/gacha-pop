@@ -7,17 +7,28 @@ import { useEffect, useRef, useState } from "react";
 export function AppLoadingOverlay() {
   const pathname = usePathname();
   const firstRenderRef = useRef(true);
-  const [visible, setVisible] = useState(true);
+  const skipLoading =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname.startsWith("/gacha/roll") ||
+    pathname.startsWith("/gacha/result");
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (skipLoading) {
+      setVisible(false);
+      return;
+    }
+
     setVisible(true);
-    const delay = firstRenderRef.current ? 1400 : 1000;
+    const delay = firstRenderRef.current ? 480 : 280;
     firstRenderRef.current = false;
     const timer = window.setTimeout(() => setVisible(false), delay);
     return () => window.clearTimeout(timer);
-  }, [pathname]);
+  }, [pathname, skipLoading]);
 
-  if (!visible) return null;
+  if (skipLoading || !visible) return null;
 
   return (
     <div className="app-loading-overlay" role="status" aria-live="polite">

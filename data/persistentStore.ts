@@ -22,6 +22,8 @@ type DbUserRow = {
   username: string;
   email: string;
   pin: string;
+  phone: string | null;
+  avatar_url: string | null;
   password_hash: string;
   role: UserRole;
   suspended: boolean | null;
@@ -369,6 +371,8 @@ function normalizeUsers(users: UserRecord[]): UserRecord[] {
       username: toText(user.username),
       email: toText(user.email).toLowerCase(),
       pin: toText(user.pin),
+      phone: toText(user.phone),
+      avatarUrl: toText(user.avatarUrl),
       passwordHash: toText(user.passwordHash),
       role: user.role === "admin" ? ("admin" as const) : ("user" as const),
       coins: Math.max(0, Number(user.coins ?? 0)),
@@ -519,6 +523,8 @@ function rowToUser(user: DbUserRow, wallet?: DbWalletRow): UserRecord {
     username: user.username,
     email: user.email,
     pin: user.pin,
+    phone: user.phone ?? "",
+    avatarUrl: user.avatar_url ?? "",
     passwordHash: user.password_hash,
     role: user.role,
     coins: Math.max(0, Number(wallet?.coins ?? 0)),
@@ -534,6 +540,8 @@ function userToRow(user: UserRecord): DbUserRow {
     username: user.username,
     email: user.email.toLowerCase(),
     pin: user.pin,
+    phone: user.phone ?? "",
+    avatar_url: user.avatarUrl ?? "",
     password_hash: user.passwordHash,
     role: user.role,
     suspended: Boolean(user.suspended),
@@ -981,7 +989,7 @@ export async function getSharedStoreFromDatabase(): Promise<SharedStoreSnapshot>
 
   const [users, wallets, orders, notifications, coupons, inventory, shippingAddresses, coinLogs, topupLogs, rollHistory] =
     await Promise.all([
-      selectRows<DbUserRow>("users", "select=id,username,email,pin,password_hash,role,suspended,created_at,updated_at&order=created_at.asc"),
+      selectRows<DbUserRow>("users", "select=id,username,email,pin,phone,avatar_url,password_hash,role,suspended,created_at,updated_at&order=created_at.asc"),
       selectRows<DbWalletRow>("wallets", "select=user_id,coins,updated_at&order=updated_at.desc"),
       selectRows<DbOrderRow>("orders", "select=id,user_id,username,items,receiver_name,phone,address,tracking_number,status,shipping_fee,coupon_code,coupon_type,coupon_discount_percent,created_at,updated_at&order=created_at.desc"),
       selectRows<DbNotificationRow>("admin_notifications", "select=id,type,title,message,is_read,created_at&order=created_at.desc"),

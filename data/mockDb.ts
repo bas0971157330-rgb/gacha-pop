@@ -11,6 +11,7 @@ import {
   type CouponRecord,
 } from "@/data/coupons";
 import { DEFAULT_COIN_BALANCE, saveCoinBalance, spendCoins } from "@/data/wallet";
+import { normalizeAvatarUrl, pickRandomAvatarUrl } from "@/data/avatarOptions";
 
 export type UserRole = "user" | "admin";
 export type ProductStatus = "open" | "closed";
@@ -22,6 +23,8 @@ export type UserRecord = {
   username: string;
   email: string;
   pin: string;
+  phone?: string;
+  avatarUrl?: string;
   passwordHash: string;
   role: UserRole;
   coins: number;
@@ -605,7 +608,11 @@ function makeId(prefix: string) {
 }
 
 function toSafeUser(user: UserRecord): SafeUser {
-  const { passwordHash: _passwordHash, ...safeUser } = user;
+  const { passwordHash: _passwordHash, ...safeUser } = {
+    ...user,
+    phone: user.phone ?? "",
+    avatarUrl: normalizeAvatarUrl(user.avatarUrl),
+  };
   return safeUser;
 }
 
@@ -631,6 +638,8 @@ async function migrateAdminUserIfNeeded() {
           username: "kenji2612",
           email: "kenji2612@gachapop.local",
           pin: "261244",
+          phone: "0904114622",
+          avatarUrl: "/avatars/shiba.png",
           passwordHash: await hashPassword("kenji2612"),
           role: "admin" as UserRole,
           coins: 99999,
@@ -1060,6 +1069,8 @@ export async function ensureMockDatabase(options: { notifySync?: boolean } = {})
       username: "kenji2612",
       email: "kenji2612@gachapop.local",
       pin: "261244",
+      phone: "0904114622",
+      avatarUrl: "/avatars/shiba.png",
       passwordHash: await hashPassword("kenji2612"),
       role: "admin",
       coins: 99999,
@@ -1071,6 +1082,8 @@ export async function ensureMockDatabase(options: { notifySync?: boolean } = {})
       username: "Player",
       email: "player@gachapop.local",
       pin: "111111",
+      phone: "0800000000",
+      avatarUrl: "/avatars/hamster.png",
       passwordHash: await hashPassword("Player123!"),
       role: "user",
       coins: DEFAULT_COIN_BALANCE,
@@ -1128,15 +1141,25 @@ export function logoutUser() {
 export async function registerUser(input: {
   username: string;
   email: string;
-  pin: string;
+  phone: string;
   password: string;
+  avatarUrl?: string;
 }) {
   await ensureMockDatabase();
   const users = getUsers();
   const username = input.username.trim();
   const email = input.email.trim().toLowerCase();
+  const phone = input.phone.trim();
+  const pinFallback = phone.replace(/\D/g, "").slice(-6).padStart(6, "0");
 
-  if (users.some((user) => user.username.toLowerCase() === username.toLowerCase() || user.email === email)) {
+  if (
+    users.some(
+      (user) =>
+        user.username.toLowerCase() === username.toLowerCase() ||
+        user.email === email ||
+        (user.phone && user.phone.replace(/\D/g, "") === phone.replace(/\D/g, "")),
+    )
+  ) {
     throw new Error("ชื่อผู้ใช้หรืออีเมลนี้ถูกใช้แล้ว");
   }
 
@@ -1144,7 +1167,9 @@ export async function registerUser(input: {
     id: makeId("user"),
     username,
     email,
-    pin: input.pin,
+    pin: pinFallback,
+    phone,
+    avatarUrl: normalizeAvatarUrl(input.avatarUrl ?? pickRandomAvatarUrl()),
     passwordHash: await hashPassword(input.password),
     role: username.toLowerCase() === ADMIN_USERNAME ? "admin" : "user",
     coins: DEFAULT_COIN_BALANCE,
@@ -1189,6 +1214,35 @@ export async function resetPasswordWithPin(identifier: string, pin: string, pass
   const passwordHash = await hashPassword(password);
   saveUsers(users.map((item) => (item.id === user.id ? { ...item, passwordHash } : item)));
   return true;
+}
+
+export async function resetPasswordWithPhone(identifier: string, phone: string, password: string) {
+  await ensureMockDatabase();
+  const normalizedIdentifier = identifier.trim().toLowerCase();
+  const normalizedPhone = phone.replace(/\D/g, "");
+  const users = getUsers();
+  const user = users.find(
+    (item) => item.username.toLowerCase() === normalizedIdentifier || item.email.toLowerCase() === normalizedIdentifier,
+  );
+
+  if (!user) throw new Error("ไม่พบบัญชีผู้ใช้");
+  if (!normalizedPhone || (user.phone ?? "").replace(/\D/g, "") !== normalizedPhone) throw new Error("เบอร์โทรไม่ถูกต้อง");
+
+  const passwordHash = await hashPassword(password);
+  saveUsers(users.map((item) => (item.id === user.id ? { ...item, passwordHash } : item)));
+  return true;
+}
+
+export function updateUserAvatar(userId: string, avatarUrl: string) {
+  const safeAvatarUrl = normalizeAvatarUrl(avatarUrl);
+  const users = getUsers();
+  const nextUsers = users.map((user) => (user.id === userId ? { ...user, avatarUrl: safeAvatarUrl } : user));
+  saveUsers(nextUsers);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("gacha-auth-updated"));
+  }
+  const updatedUser = nextUsers.find((user) => user.id === userId);
+  return updatedUser ? toSafeUser(updatedUser) : null;
 }
 
 export async function adminResetPassword(userId: string) {

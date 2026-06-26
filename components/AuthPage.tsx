@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, LockKeyhole, LogIn, Mail, RotateCcw, ShieldCheck, User, UserPlus, X } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, LogIn, Mail, Phone, RotateCcw, User, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "@/components/Logo";
-import { ensureMockDatabase, loginUser, registerUser, resetPasswordWithPin } from "@/data/mockDb";
+import { pickRandomAvatarUrl } from "@/data/avatarOptions";
+import { ensureMockDatabase, loginUser, registerUser, resetPasswordWithPhone } from "@/data/mockDb";
 
 type AuthMode = "login" | "register" | "forgot";
 
@@ -114,7 +115,7 @@ export function AuthPage({ mode }: AuthPageProps) {
   const [identifier, setIdentifier] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [pin, setPin] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -136,7 +137,7 @@ export function AuthPage({ mode }: AuthPageProps) {
       ? "เข้าสู่ระบบเพื่อสนุกกับการสุ่มกาชาปอง"
       : mode === "register"
         ? "สร้างบัญชี Gacha Pop ของคุณ"
-        : "ยืนยัน PIN 6 หลักแล้วตั้งรหัสผ่านใหม่";
+        : "ยืนยันอีเมลหรือชื่อผู้ใช้พร้อมเบอร์โทร แล้วตั้งรหัสผ่านใหม่";
 
   useEffect(() => {
     ensureMockDatabase();
@@ -193,20 +194,20 @@ export function AuthPage({ mode }: AuthPageProps) {
 
       if (mode === "register") {
         if (!acceptedTerms) throw new Error("กรุณายอมรับเงื่อนไขและข้อตกลงก่อนสมัครสมาชิก");
-        if (!username.trim() || !email.trim() || !pin || !password || !confirmPassword) throw new Error("กรุณากรอกข้อมูลสมัครสมาชิกให้ครบ");
+        if (!username.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword) throw new Error("กรุณากรอกข้อมูลสมัครสมาชิกให้ครบ");
         if (!/^[a-zA-Z0-9_-]{5,20}$/.test(username)) throw new Error("ชื่อผู้ใช้ต้องเป็น a-z, A-Z, 0-9, _ หรือ - ความยาว 5-20 ตัวอักษร");
-        if (!/^\d{6}$/.test(pin)) throw new Error("PIN ต้องเป็นตัวเลข 6 หลัก");
+        if (phone.replace(/\D/g, "").length < 9) throw new Error("กรุณากรอกเบอร์โทรให้ถูกต้อง");
         if (strength.score < 3) throw new Error("กรุณาตั้งรหัสผ่านให้ปลอดภัยมากขึ้น");
         if (password !== confirmPassword) throw new Error("รหัสผ่านยืนยันไม่ตรงกัน");
-        await registerUser({ username, email, pin, password });
+        await registerUser({ username, email, phone, password, avatarUrl: pickRandomAvatarUrl() });
         goAfterAuth("/");
         return;
       }
 
-      if (!/^\d{6}$/.test(pin)) throw new Error("PIN ต้องเป็นตัวเลข 6 หลัก");
+      if (phone.replace(/\D/g, "").length < 9) throw new Error("กรุณากรอกเบอร์โทรให้ถูกต้อง");
       if (strength.score < 3) throw new Error("กรุณาตั้งรหัสผ่านใหม่ให้ปลอดภัยมากขึ้น");
       if (password !== confirmPassword) throw new Error("รหัสผ่านยืนยันไม่ตรงกัน");
-      await resetPasswordWithPin(identifier, pin, password);
+      await resetPasswordWithPhone(identifier, phone, password);
       setMessage("ตั้งรหัสผ่านใหม่เรียบร้อยแล้ว เข้าสู่ระบบได้เลย");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "เกิดข้อผิดพลาด กรุณาลองใหม่");
@@ -302,12 +303,12 @@ export function AuthPage({ mode }: AuthPageProps) {
 
           {(mode === "register" || mode === "forgot") && (
             <label className="auth-field">
-              <span>PIN 6 หลัก</span>
+              <span>เบอร์โทร</span>
               <div>
-                <ShieldCheck size={19} />
-                <input name="gacha-pin" value={pin} onChange={(event) => setPin(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" inputMode="numeric" autoComplete="off" required />
+                <Phone size={19} />
+                <input name="gacha-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value.replace(/[^\d+ -]/g, "").slice(0, 16))} placeholder="08x-xxx-xxxx" inputMode="tel" autoComplete="tel" required />
               </div>
-              <small className={pin.length === 6 ? "auth-ok" : "auth-danger"}>{pin.length === 6 ? "PIN ครบ 6 หลัก" : "ต้องมีจำนวน 6 ตัวอักษร"}</small>
+              <small className={phone.replace(/\D/g, "").length >= 9 ? "auth-ok" : "auth-danger"}>{phone.replace(/\D/g, "").length >= 9 ? "ใช้เบอร์นี้ยืนยันบัญชีได้" : "กรอกเบอร์โทรอย่างน้อย 9 หลัก"}</small>
             </label>
           )}
 
