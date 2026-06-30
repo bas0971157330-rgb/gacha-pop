@@ -200,6 +200,10 @@ export type SharedStoreSnapshot = {
   rollHistory: RollHistory[];
 };
 
+type SharedStoreWriteOptions = {
+  preserveWallets?: boolean;
+};
+
 export type PublicStoreSnapshot = {
   products: ProductRecord[];
   categories: ProductCategoryRecord[];
@@ -852,9 +856,25 @@ function rowToCoupon(row: DbCouponRow): import("@/data/coupons").CouponRecord {
   };
 }
 
-async function upsertUsers(users: UserRecord[]) {
+async function insertMissingWallets(users: UserRecord[]) {
+  const rows = users.map(walletToRow);
+  if (rows.length === 0) return;
+
+  await supabaseRequest<DbWalletRow[]>("/rest/v1/wallets?on_conflict=user_id", {
+    method: "POST",
+    prefer: "resolution=ignore-duplicates,return=representation",
+    body: JSON.stringify(rows),
+  });
+}
+
+async function upsertUsers(users: UserRecord[], options: SharedStoreWriteOptions = {}) {
   if (users.length === 0) return;
   await upsertRows("users", users.map(userToRow), "id");
+  if (options.preserveWallets) {
+    await insertMissingWallets(users);
+    return;
+  }
+
   await upsertRows("wallets", users.map(walletToRow), "user_id");
 }
 
@@ -874,9 +894,9 @@ async function upsertPublicStore(store: Partial<PublicStoreSnapshot>) {
   }
 }
 
-async function upsertSharedStore(store: Partial<SharedStoreSnapshot>) {
+async function upsertSharedStore(store: Partial<SharedStoreSnapshot> & SharedStoreWriteOptions) {
   if (!isSupabaseConfigured()) return;
-  if (store.users && store.users.length > 0) await upsertUsers(normalizeUsers(store.users));
+  if (store.users && store.users.length > 0) await upsertUsers(normalizeUsers(store.users), { preserveWallets: store.preserveWallets });
   if (store.orders && store.orders.length > 0) await upsertRows("orders", normalizeOrders(store.orders).map(orderToRow), "id");
   if (store.notifications && store.notifications.length > 0) {
     await upsertRows("admin_notifications", normalizeNotifications(store.notifications).map(notificationToRow), "id");
@@ -1023,7 +1043,7 @@ export async function getSharedStoreFromDatabase(): Promise<SharedStoreSnapshot>
   };
 }
 
-export async function saveSharedStoreToDatabase(store: Partial<SharedStoreSnapshot>) {
+export async function saveSharedStoreToDatabase(store: Partial<SharedStoreSnapshot> & SharedStoreWriteOptions) {
   if (!isSupabaseConfigured()) return;
   await upsertSharedStore({
     users: store.users?.map((user) => ({

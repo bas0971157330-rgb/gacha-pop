@@ -329,12 +329,16 @@ type SharedStoreSnapshot = {
   rollHistory?: RollHistory[];
 };
 
+type SharedStoreSyncPayload = Partial<SharedStoreSnapshot> & {
+  preserveWallets?: boolean;
+};
+
 const SHARED_STORE_SYNC_COOLDOWN_MS = 2500;
 let sharedStoreSyncPromise: Promise<SharedStoreSnapshot | null> | null = null;
 let lastSharedStoreSyncAt = 0;
 let lastSharedStoreSyncResult: SharedStoreSnapshot | null = null;
 
-function syncSharedStore(value: Partial<SharedStoreSnapshot>) {
+function syncSharedStore(value: SharedStoreSyncPayload) {
   if (!canUseStorage()) return;
   fetch("/api/shared-store", {
     method: "POST",
@@ -344,7 +348,21 @@ function syncSharedStore(value: Partial<SharedStoreSnapshot>) {
   }).catch(() => undefined);
 }
 
-function publishSharedStoreSnapshot(value: Partial<SharedStoreSnapshot> = {}) {
+async function syncSharedStoreNow(value: SharedStoreSyncPayload) {
+  if (!canUseStorage()) return;
+  const response = await fetch("/api/shared-store", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(value),
+  });
+  if (!response.ok) throw new Error("Unable to sync user data");
+}
+
+function syncUserRecord(user: UserRecord) {
+  return syncSharedStoreNow({ users: [user], preserveWallets: true });
+}
+
+function publishSharedStoreSnapshot(value: SharedStoreSyncPayload = {}) {
   if (!canUseStorage()) return;
   syncSharedStore({
     users: getUsers(),
@@ -752,9 +770,9 @@ export function getUsers() {
   return readList<UserRecord>(USERS_STORAGE_KEY);
 }
 
-export function saveUsers(users: UserRecord[]) {
+export function saveUsers(users: UserRecord[], options: { syncRemote?: boolean } = {}) {
   writeList(USERS_STORAGE_KEY, users);
-  publishSharedStoreSnapshot({ users });
+  if (options.syncRemote ?? true) publishSharedStoreSnapshot({ users });
   if (canUseStorage()) window.dispatchEvent(new CustomEvent("gacha-users-updated"));
 }
 
@@ -1196,7 +1214,9 @@ export async function registerUser(input: {
     createdAt: new Date().toISOString(),
   };
 
-  saveUsers([...users, newUser]);
+  const nextUsers = [...users, newUser];
+  saveUsers(nextUsers, { syncRemote: false });
+  await syncUserRecord(newUser);
   setSession(newUser.id, true);
   return toSafeUser(newUser);
 }
@@ -1214,6 +1234,7 @@ export async function loginUser(identifier: string, password: string, remember: 
   const validPassword = await verifyPassword(password, user.passwordHash);
   if (!validPassword) throw new Error("รหัสผ่านไม่ถูกต้อง");
 
+  await syncUserRecord(user).catch(() => undefined);
   setSession(user.id, remember);
   window.dispatchEvent(new CustomEvent("gacha-wallet-updated"));
   return toSafeUser(user);
