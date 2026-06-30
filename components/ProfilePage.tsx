@@ -41,12 +41,12 @@ import { ensureMockDatabase, getCurrentUser, logoutUser, updateUserAvatar, type 
 import { getCoinBalance } from "@/data/wallet";
 
 const fallbackUser = {
-  username: "kenji_i7",
-  handle: "@kenji_i7",
-  email: "kenji_i7@gmail.com",
+  username: "kenji2612",
+  handle: "@kenji2612",
+  email: "bas0971157330@gmail.com",
   coins: 0,
   pin: "123456",
-  phone: "0800000000",
+  phone: "0904114622",
   avatarUrl: "/avatars/hamster.png",
   joinDate: "12 พฤษภาคม 2024",
 };

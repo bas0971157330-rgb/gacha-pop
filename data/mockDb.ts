@@ -663,7 +663,13 @@ async function migrateAdminUserIfNeeded() {
 
   if (
     nextUsers.length !== users.length ||
-    nextUsers.some((user, index) => user.id !== users[index]?.id || user.role !== users[index]?.role)
+    nextUsers.some(
+      (user, index) =>
+        user.id !== users[index]?.id ||
+        user.role !== users[index]?.role ||
+        user.email !== users[index]?.email ||
+        user.phone !== users[index]?.phone,
+    )
   ) {
     saveUsers(nextUsers);
   }
