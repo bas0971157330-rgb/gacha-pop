@@ -148,6 +148,8 @@ export const ROLL_HISTORY_STORAGE_KEY = "gacha_roll_history";
 
 const HASH_ITERATIONS = 120000;
 const ADMIN_USERNAME = "kenji2612";
+const ADMIN_EMAIL = "bas0971157330@gmail.com";
+const ADMIN_PHONE = "0904114622";
 const MAX_INLINE_IMAGE_LENGTH = 360000;
 const MAX_INVENTORY_QUANTITY = 999;
 
@@ -630,7 +632,7 @@ function toSafeUser(user: UserRecord): SafeUser {
 function withAdminUserMigration(users: UserRecord[]) {
   return users.map((user) =>
     user.username.trim().toLowerCase() === ADMIN_USERNAME
-      ? { ...user, role: "admin" as UserRole }
+      ? { ...user, email: ADMIN_EMAIL, phone: ADMIN_PHONE, role: "admin" as UserRole }
       : user,
   );
 }
@@ -647,9 +649,9 @@ async function migrateAdminUserIfNeeded() {
         {
           id: "admin_kenji2612",
           username: "kenji2612",
-          email: "kenji2612@gachapop.local",
+          email: ADMIN_EMAIL,
           pin: "261244",
-          phone: "0904114622",
+          phone: ADMIN_PHONE,
           avatarUrl: "/avatars/shiba.png",
           passwordHash: await hashPassword("kenji2612"),
           role: "admin" as UserRole,
@@ -1078,9 +1080,9 @@ export async function ensureMockDatabase(options: { notifySync?: boolean } = {})
     {
       id: "admin_001",
       username: "kenji2612",
-      email: "kenji2612@gachapop.local",
+      email: ADMIN_EMAIL,
       pin: "261244",
-      phone: "0904114622",
+      phone: ADMIN_PHONE,
       avatarUrl: "/avatars/shiba.png",
       passwordHash: await hashPassword("kenji2612"),
       role: "admin",
