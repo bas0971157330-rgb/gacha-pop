@@ -1249,6 +1249,8 @@ async function purchaseProductViaRestFallback(userId: string, productId: string,
 }
 
 export async function adjustWalletBalanceAtomic(userId: string, delta: number, reason = "") {
+  await ensureUserAndWallet(userId);
+
   try {
     return await callRpc<WalletRpcRow>("adjust_wallet_balance", {
       target_user_id: userId,
@@ -1278,6 +1280,8 @@ export async function adjustProductStockAtomic(productId: string, delta: number)
 }
 
 export async function purchaseProductAtomic(userId: string, productId: string, priceCoin: number) {
+  await ensureUserAndWallet(userId);
+
   try {
     return await callRpc<PurchaseRpcRow>("purchase_product_atomic", {
       target_user_id: userId,
