@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -50,15 +50,15 @@ const fallbackUser = {
   pin: "123456",
   phone: "0800000000",
   avatarUrl: "/avatars/hamster.png",
-  joinDate: "12 เธเธคเธฉเธ เธฒเธเธก 2024",
+  joinDate: "12 พฤษภาคม 2024",
 };
 
 const sidebarItems = [
-  { id: "profile-section", label: "เนเธเธฃเนเธเธฅเน", icon: UserCircle },
-  { id: "account-section", label: "เธเนเธญเธกเธนเธฅเธเธฑเธเธเธต", icon: BadgeInfo },
-  { id: "address-section", label: "เธ—เธตเนเธญเธขเธนเนเธเธฑเธ”เธชเนเธ", icon: MapPin },
-  { id: "settings-section", label: "เธ•เธฑเนเธเธเนเธฒเธเธฑเธเธเธต", icon: ShieldCheck },
-  { id: "invite-section", label: "เธเธงเธเน€เธเธทเนเธญเธ", icon: Users },
+  { id: "profile-section", label: "โปรไฟล์", icon: UserCircle },
+  { id: "account-section", label: "ข้อมูลบัญชี", icon: BadgeInfo },
+  { id: "address-section", label: "ที่อยู่จัดส่ง", icon: MapPin },
+  { id: "settings-section", label: "ตั้งค่าบัญชี", icon: ShieldCheck },
+  { id: "invite-section", label: "ชวนเพื่อน", icon: Users },
 ];
 
 function formatJoinDate(value?: string) {
@@ -84,11 +84,11 @@ function formatAddress(address: ShippingAddress) {
 
   return [
     address.detail,
-    `เธเนเธฒเธเน€เธฅเธเธ—เธตเน ${address.houseNo}`,
-    address.road ? `เธ–เธเธ ${address.road}` : "",
+    `บ้านเลขที่ ${address.houseNo}`,
+    address.road ? `ถนน ${address.road}` : "",
     `${areaLabels.subdistrictLabel} ${address.subdistrict}`,
     `${areaLabels.districtLabel} ${address.district}`,
-    `เธเธฑเธเธซเธงเธฑเธ” ${address.province}`,
+    `จังหวัด ${address.province}`,
     address.postalCode,
   ]
     .filter(Boolean)
@@ -182,7 +182,7 @@ export function ProfilePage() {
       <main className="profile-page">
         <div className="profile-layout">
           <section className="profile-hero-card">
-            <h1>เธเธณเธฅเธฑเธเนเธซเธฅเธ”เนเธเธฃเนเธเธฅเน...</h1>
+            <h1>กำลังโหลดโปรไฟล์...</h1>
           </section>
         </div>
       </main>
@@ -212,13 +212,13 @@ export function ProfilePage() {
 
   function handleSaveAddress() {
     if (!isShippingAddressComplete(address)) {
-      setAddressMessage("เธเธฃเธธเธ“เธฒเธเธฃเธญเธเธเนเธญเธกเธนเธฅเธ—เธตเนเธญเธขเธนเนเธเธฑเธ”เธชเนเธเนเธซเนเธเธฃเธเธเนเธญเธเธเธฑเธเธ—เธถเธ");
+      setAddressMessage("กรุณากรอกข้อมูลที่อยู่จัดส่งให้ครบก่อนบันทึก");
       return;
     }
 
     saveShippingAddress(address, currentUser?.id);
     setAddressSaved(true);
-    setAddressMessage("เธเธฑเธเธ—เธถเธเธ—เธตเนเธญเธขเธนเนเธเธฑเธ”เธชเนเธเนเธงเนเนเธเนเธญเธ”เธตเธเธตเนเนเธฅเนเธง");
+    setAddressMessage("บันทึกที่อยู่จัดส่งไว้ในไอดีนี้แล้ว");
   }
 
   return (
@@ -226,18 +226,18 @@ export function ProfilePage() {
       <div className="profile-float profile-float-a" />
       <div className="profile-float profile-float-b" />
       <div className="profile-float profile-float-c" />
-      <span className="profile-sparkle profile-sparkle-a">โฆ</span>
-      <span className="profile-sparkle profile-sparkle-b">โง</span>
+      <span className="profile-sparkle profile-sparkle-a">✦</span>
+      <span className="profile-sparkle profile-sparkle-b">✧</span>
 
       <header className="profile-topbar">
-        <Link href="/" aria-label="Gacha Pop เธซเธเนเธฒเธซเธฅเธฑเธ" className="profile-logo-link">
+        <Link href="/" aria-label="Gacha Pop หน้าหลัก" className="profile-logo-link">
           <Image src="/navbar-logo.png" alt="Gacha Pop" width={1129} height={1122} priority />
         </Link>
 
         <button
           type="button"
           className="profile-mobile-menu-button"
-          aria-label={profileMenuOpen ? "close profile menu" : "open profile menu"}
+          aria-label={profileMenuOpen ? "ปิดเมนูโปรไฟล์" : "เปิดเมนูโปรไฟล์"}
           aria-expanded={profileMenuOpen}
           onClick={() => setProfileMenuOpen((current) => !current)}
         >
@@ -247,24 +247,24 @@ export function ProfilePage() {
         <nav className={`profile-nav${profileMenuOpen ? " profile-nav-open" : ""}`}>
           <Link href="/">
             <Home size={20} />
-            เธซเธเนเธฒเธซเธฅเธฑเธ
+            หน้าหลัก
           </Link>
           <Link href="/gacha">
             <Sparkles size={20} />
-            เธชเธดเธเธเนเธฒ
+            สินค้า
           </Link>
           <Link href="/wallet">
             <Wallet size={20} />
-            เธเธฃเธฐเน€เธเนเธฒ
+            กระเป๋า
           </Link>
           <Link href="/topup">
             <span className="profile-coin-dot">C</span>
-            เน€เธ•เธดเธกเน€เธเธดเธ
+            เติมเงิน
           </Link>
         </nav>
 
         <div className="profile-top-actions">
-          <button aria-label="เนเธเนเธเน€เธ•เธทเธญเธ">
+          <button aria-label="แจ้งเตือน">
             <Bell size={24} />
           </button>
           <div className="profile-mini-avatar">
@@ -274,20 +274,20 @@ export function ProfilePage() {
       </header>
 
       {profileMenuOpen && (
-        <div className="nav-mobile-shell profile-mobile-drawer-shell" aria-label="เน€เธกเธเธนเนเธเธฃเนเธเธฅเนเธกเธทเธญเธ–เธทเธญ">
+        <div className="nav-mobile-shell profile-mobile-drawer-shell" aria-label="เมนูโปรไฟล์มือถือ">
           <button
             type="button"
             className="nav-mobile-backdrop"
-            aria-label="เธเธดเธ”เน€เธกเธเธน"
+            aria-label="ปิดเมนู"
             onClick={() => setProfileMenuOpen(false)}
           />
-          <aside className="nav-mobile-drawer profile-mobile-drawer" aria-label="เน€เธกเธเธนเนเธเธฃเนเธเธฅเน">
+          <aside className="nav-mobile-drawer profile-mobile-drawer" aria-label="เมนูโปรไฟล์">
             <div className="nav-mobile-drawer-header">
               <Image src="/navbar-logo.png" alt="Gacha Pop" width={1129} height={1122} priority />
               <button
                 type="button"
                 className="nav-mobile-close"
-                aria-label="เธเธดเธ”เน€เธกเธเธน"
+                aria-label="ปิดเมนู"
                 onClick={() => setProfileMenuOpen(false)}
               >
                 <X size={22} strokeWidth={2.8} />
@@ -295,27 +295,27 @@ export function ProfilePage() {
             </div>
 
             <div className="nav-mobile-drawer-body">
-              <p className="nav-mobile-section-title">เน€เธกเธเธน</p>
+              <p className="nav-mobile-section-title">เมนู</p>
               <div className="nav-mobile-link-grid">
                 <Link href="/" onClick={() => setProfileMenuOpen(false)} className="nav-mobile-link">
                   <Home size={20} strokeWidth={2.5} />
-                  <span>เธซเธเนเธฒเธซเธฅเธฑเธ</span>
+                  <span>หน้าหลัก</span>
                 </Link>
                 <Link href="/gacha" onClick={() => setProfileMenuOpen(false)} className="nav-mobile-link">
                   <Sparkles size={20} strokeWidth={2.5} />
-                  <span>เธชเธดเธเธเนเธฒ</span>
+                  <span>สินค้า</span>
                 </Link>
                 <Link href="/wallet" onClick={() => setProfileMenuOpen(false)} className="nav-mobile-link">
                   <Wallet size={20} strokeWidth={2.5} />
-                  <span>เธเธฃเธฐเน€เธเนเธฒ</span>
+                  <span>กระเป๋า</span>
                 </Link>
                 <Link href="/topup" onClick={() => setProfileMenuOpen(false)} className="nav-mobile-link">
                   <span className="profile-coin-dot">C</span>
-                  <span>เน€เธ•เธดเธกเน€เธเธดเธ</span>
+                  <span>เติมเงิน</span>
                 </Link>
               </div>
 
-              <p className="nav-mobile-section-title">เนเธเธฃเนเธเธฅเน</p>
+              <p className="nav-mobile-section-title">โปรไฟล์</p>
               <div className="nav-mobile-link-grid">
                 {sidebarItems.map((item) => {
                   const Icon = item.icon;
@@ -341,12 +341,12 @@ export function ProfilePage() {
                     }}
                   >
                     <LayoutDashboard size={20} strokeWidth={2.5} />
-                    <span>เนเธญเธ”เธกเธดเธ</span>
+                    <span>แอดมิน</span>
                   </button>
                 )}
                 <button type="button" className="nav-mobile-link profile-mobile-logout" onClick={handleLogout}>
                   <LogOut size={20} strokeWidth={2.5} />
-                  <span>เธญเธญเธเธเธฒเธเธฃเธฐเธเธ</span>
+                  <span>ออกจากระบบ</span>
                 </button>
               </div>
             </div>
@@ -365,13 +365,13 @@ export function ProfilePage() {
             </div>
             <h2>{user.username}</h2>
             <p>{user.handle}</p>
-            <span className="profile-side-label">เธเธเน€เธซเธฅเธทเธญ</span>
+            <span className="profile-side-label">คงเหลือ</span>
             <strong className="profile-side-coins">
               <span className="coin-badge">C</span>
               {user.coins.toLocaleString("th-TH")}
             </strong>
             <Link href="/topup" className="profile-topup-button">
-              + เน€เธ•เธดเธกเน€เธเธดเธ
+              + เติมเงิน
             </Link>
           </section>
 
@@ -392,12 +392,12 @@ export function ProfilePage() {
             {isAdmin && (
               <button className="profile-side-admin" onClick={() => router.push("/admin")}>
                 <LayoutDashboard size={23} />
-                เนเธญเธ”เธกเธดเธ
+                แอดมิน
               </button>
             )}
             <button className="profile-side-logout" onClick={handleLogout}>
               <LogOut size={23} />
-              เธญเธญเธเธเธฒเธเธฃเธฐเธเธ
+              ออกจากระบบ
             </button>
           </nav>
 
@@ -410,7 +410,7 @@ export function ProfilePage() {
           <section id="profile-section" className="profile-hero-card profile-scroll-section">
             <div className="profile-section-title">
               <Sparkles size={26} />
-              <h1>เนเธเธฃเนเธเธฅเนเธเธญเธเธเธฑเธ</h1>
+              <h1>โปรไฟล์ของฉัน</h1>
               <Sparkles size={20} />
             </div>
 
@@ -426,7 +426,7 @@ export function ProfilePage() {
                 <p>{user.handle}</p>
                 <span className="profile-join-date">
                   <CalendarDays size={19} />
-                  เน€เธเนเธฒเธฃเนเธงเธกเน€เธกเธทเนเธญ {user.joinDate}
+                  เข้าร่วมเมื่อ {user.joinDate}
                 </span>
               </div>
               <div className="profile-hero-art">
@@ -437,41 +437,41 @@ export function ProfilePage() {
           </section>
 
           <section id="account-section" className="profile-card profile-account-card profile-scroll-section">
-            <h2>เธเนเธญเธกเธนเธฅเธเธฑเธเธเธต</h2>
+            <h2>ข้อมูลบัญชี</h2>
             <div className="profile-row-list">
               <div className="profile-info-row">
                 <span>
                   <UserCircle size={24} />
-                  เธเธทเนเธญเธเธนเนเนเธเน
+                  ชื่อผู้ใช้
                 </span>
                 <strong>{user.username}</strong>
               </div>
               <div className="profile-info-row">
                 <span>
                   <Gift size={24} />
-                  เธญเธตเน€เธกเธฅ
+                  อีเมล
                 </span>
                 <strong>{maskEmail(user.email)}</strong>
               </div>
               <div className="profile-info-row">
                 <span>
                   <LockKeyhole size={24} />
-                  เธฃเธซเธฑเธชเธเนเธฒเธ
+                  รหัสผ่าน
                 </span>
                 <strong>********</strong>
-                <button>เน€เธเธฅเธตเนเธขเธเธฃเธซเธฑเธชเธเนเธฒเธ</button>
+                <button>เปลี่ยนรหัสผ่าน</button>
               </div>
               <div className="profile-info-row">
                 <span>
                   <LockKeyhole size={24} />
-                  เธฃเธซเธฑเธช PIN 6 เธซเธฅเธฑเธ
+                  รหัส PIN 6 หลัก
                 </span>
-                <strong>{showPin ? user.pin : "โ€ขโ€ขโ€ขโ€ขโ€ขโ€ข"}</strong>
+                <strong>{showPin ? user.pin : "******"}</strong>
                 <button
                   type="button"
                   className="profile-pin-eye-button"
                   onClick={() => setShowPin((current) => !current)}
-                  aria-label={showPin ? "เธเนเธญเธเธฃเธซเธฑเธช PIN" : "เนเธชเธ”เธเธฃเธซเธฑเธช PIN"}
+                  aria-label={showPin ? "ซ่อนรหัส PIN" : "แสดงรหัส PIN"}
                 >
                   {showPin ? <EyeOff size={22} /> : <Eye size={22} />}
                 </button>
@@ -481,61 +481,61 @@ export function ProfilePage() {
 
           <section id="address-section" className="profile-card profile-address-card profile-scroll-section">
             <div className="profile-card-head">
-              <h2>เธ—เธตเนเธญเธขเธนเนเธเธฑเธ”เธชเนเธเธเธญเธเธเธฑเธ</h2>
+              <h2>ที่อยู่จัดส่งของฉัน</h2>
               <button type="button" onClick={handleSaveAddress}>
                 <Save size={18} />
-                เธเธฑเธเธ—เธถเธเธ—เธตเนเธญเธขเธนเน
+                บันทึกที่อยู่
               </button>
             </div>
             {hasAddress ? (
               <article className="profile-address-box">
                 <MapPin size={26} />
                 <div>
-                  <strong>เธเนเธฒเธ <span>เธ—เธตเนเธญเธขเธนเนเธซเธฅเธฑเธ</span></strong>
-                  <p>เธเธทเนเธญเธเธนเนเธฃเธฑเธ: {address.receiverName}</p>
-                  <p>เน€เธเธญเธฃเนเนเธ—เธฃ: {address.phone}</p>
+                  <strong>บ้าน <span>ที่อยู่หลัก</span></strong>
+                  <p>ชื่อผู้รับ: {address.receiverName}</p>
+                  <p>เบอร์โทร: {address.phone}</p>
                   <p>{formatAddress(address)}</p>
                 </div>
-                <span className="profile-address-saved">เธเธฑเธเธ—เธถเธเนเธฅเนเธง</span>
+                <span className="profile-address-saved">บันทึกแล้ว</span>
               </article>
             ) : (
               <article className="profile-address-box profile-address-empty">
                 <MapPin size={28} />
                 <div>
-                  <strong>เธขเธฑเธเนเธกเนเธกเธตเธ—เธตเนเธญเธขเธนเนเธเธฑเธ”เธชเนเธ</strong>
-                  <p>เธเธฃเธญเธเธเนเธญเธกเธนเธฅเธ”เนเธฒเธเธฅเนเธฒเธเนเธฅเนเธงเธเธ”เธเธฑเธเธ—เธถเธ เธ—เธตเนเธญเธขเธนเนเธเธตเนเธเธฐเธเธนเธเธเธฑเธเนเธญเธ”เธตเธเธญเธเธเธธเธ“เธ—เธฑเธเธ—เธต</p>
+                  <strong>ยังไม่มีที่อยู่จัดส่ง</strong>
+                  <p>กรอกข้อมูลด้านล่างแล้วกดบันทึก เพื่อใช้จัดส่งรางวัลได้เร็วขึ้น</p>
                 </div>
               </article>
             )}
             <div className="profile-address-form">
               <label className="profile-address-field profile-address-field-wide">
-                <span>เธฃเธฒเธขเธฅเธฐเน€เธญเธตเธขเธ”เธ—เธตเนเธญเธขเธนเน *</span>
+                <span>รายละเอียดที่อยู่ *</span>
                 <textarea
                   value={address.detail}
                   onChange={(event) => updateAddress("detail", event.target.value)}
-                  placeholder="เน€เธเนเธ เธซเธกเธนเนเธเนเธฒเธ / เธญเธฒเธเธฒเธฃ / เธซเนเธญเธ / เธเธธเธ”เธชเธฑเธเน€เธเธ•"
+                  placeholder="เช่น หมู่บ้าน / อาคาร / ห้อง / จุดสังเกต"
                 />
               </label>
               <label className="profile-address-field">
-                <span>เธเธทเนเธญเธเธนเนเธฃเธฑเธ *</span>
-                <input value={address.receiverName} onChange={(event) => updateAddress("receiverName", event.target.value)} placeholder="เธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅ" />
+                <span>ชื่อผู้รับ *</span>
+                <input value={address.receiverName} onChange={(event) => updateAddress("receiverName", event.target.value)} placeholder="ชื่อ-นามสกุล" />
               </label>
               <label className="profile-address-field">
-                <span>เน€เธเธญเธฃเนเนเธ—เธฃ *</span>
+                <span>เบอร์โทร *</span>
                 <input value={address.phone} onChange={(event) => updateAddress("phone", event.target.value)} placeholder="08x-xxx-xxxx" inputMode="tel" />
               </label>
               <label className="profile-address-field">
-                <span>เธเนเธฒเธเน€เธฅเธเธ—เธตเน *</span>
+                <span>บ้านเลขที่ *</span>
                 <input value={address.houseNo} onChange={(event) => updateAddress("houseNo", event.target.value)} placeholder="-" />
               </label>
               <label className="profile-address-field">
-                <span>เธ–เธเธ</span>
+                <span>ถนน</span>
                 <input value={address.road} onChange={(event) => updateAddress("road", event.target.value)} placeholder="-" />
               </label>
               <label className="profile-address-field">
-                <span>เธเธฑเธเธซเธงเธฑเธ” *</span>
+                <span>จังหวัด *</span>
                 <select value={address.province} onChange={(event) => updateAddress("province", event.target.value)}>
-                  <option value="">เน€เธฅเธทเธญเธเธเธฑเธเธซเธงเธฑเธ”</option>
+                  <option value="">เลือกจังหวัด</option>
                   {addressOptions.map((item) => (
                     <option key={item.province} value={item.province}>
                       {item.province}
@@ -574,33 +574,33 @@ export function ProfilePage() {
                 </select>
               </label>
               <label className="profile-address-field">
-                <span>เธฃเธซเธฑเธชเนเธเธฃเธฉเธ“เธตเธขเน *</span>
+                <span>รหัสไปรษณีย์ *</span>
                 <input value={address.postalCode} onChange={(event) => updateAddress("postalCode", event.target.value)} placeholder="81120" inputMode="numeric" />
               </label>
             </div>
             <div className="profile-address-actions">
               <button type="button" onClick={handleSaveAddress}>
                 <Save size={19} />
-                เธเธฑเธเธ—เธถเธเธ—เธตเนเธญเธขเธนเน
+                บันทึกที่อยู่
               </button>
               {addressMessage && <p className={addressSaved ? "profile-address-message-success" : ""}>{addressMessage}</p>}
             </div>
           </section>
 
           <section id="settings-section" className="profile-card profile-settings-card profile-scroll-section">
-            <h2>เธ•เธฑเนเธเธเนเธฒเธเธฑเธเธเธต</h2>
+            <h2>ตั้งค่าบัญชี</h2>
             <div className="profile-setting-row">
               <span>
                 <Bell size={26} />
                 <div>
-                  <strong>เธเธฒเธฃเนเธเนเธเน€เธ•เธทเธญเธ</strong>
-                  <p>เน€เธเธดเธ” / เธเธดเธ” เธเธฒเธฃเนเธเนเธเน€เธ•เธทเธญเธ</p>
+                  <strong>การแจ้งเตือน</strong>
+                  <p>เปิด / ปิด การแจ้งเตือน</p>
                 </div>
               </span>
               <button
                 className={`profile-toggle ${notificationsEnabled ? "profile-toggle-on" : ""}`}
                 onClick={() => setNotificationsEnabled((current) => !current)}
-                aria-label="เธชเธฅเธฑเธเธเธฒเธฃเนเธเนเธเน€เธ•เธทเธญเธ"
+                aria-label="สลับการแจ้งเตือน"
               >
                 <i />
               </button>
@@ -609,8 +609,8 @@ export function ProfilePage() {
               <span>
                 <ShieldCheck size={26} />
                 <div>
-                  <strong>เธเธงเธฒเธกเธเธฅเธญเธ”เธ เธฑเธข</strong>
-                  <p>เธเธฑเธ”เธเธฒเธฃเธเธฒเธฃเน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธเนเธฅเธฐเธเธงเธฒเธกเธเธฅเธญเธ”เธ เธฑเธขเธเธฑเธเธเธต</p>
+                  <strong>ความปลอดภัย</strong>
+                  <p>จัดการรหัสผ่านและความปลอดภัยบัญชี</p>
                 </div>
               </span>
               <ChevronRight size={26} />
@@ -619,21 +619,21 @@ export function ProfilePage() {
 
           <section id="invite-section" className="profile-promo-card profile-scroll-section">
             <div>
-              <h2>เธญเธขเธฒเธเนเธ”เนเธเธญเธขเธเนเน€เธเธดเนเธกเนเธซเธก?</h2>
-              <p>เธเธงเธเน€เธเธทเนเธญเธเธกเธฒเน€เธฅเนเธ เธฃเธฑเธเธเธญเธขเธเนเธเธฃเธตเนเธกเนเธญเธฑเนเธ!</p>
+              <h2>อยากได้คอยน์เพิ่มไหม?</h2>
+              <p>ชวนเพื่อนมาเล่น รับคอยน์ฟรีไม่อั้น!</p>
               <button>
                 <Users size={21} />
-                เธเธงเธเน€เธเธทเนเธญเธเธ•เธญเธเธเธตเน
+                ชวนเพื่อนตอนนี้
               </button>
             </div>
             <div className="profile-promo-art">
-              <span className="profile-gift-box">๐</span>
+              <span className="profile-gift-box">🎁</span>
               <span className="profile-coin-float coin-a">C</span>
               <span className="profile-coin-float coin-b">C</span>
             </div>
           </section>
 
-          <footer className="profile-footer">ยฉ 2024 Gacha Pop. All rights reserved.</footer>
+          <footer className="profile-footer">© 2024 Gacha Pop. All rights reserved.</footer>
         </section>
       </div>
       {avatarPickerOpen && (

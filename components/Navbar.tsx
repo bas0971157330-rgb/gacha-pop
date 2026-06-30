@@ -29,11 +29,11 @@ import {
 import { getCoinBalance } from "@/data/wallet";
 
 const links = [
-  { href: "/", label: "เธซเธเนเธฒเธซเธฅเธฑเธ", icon: Home },
-  { href: "/gacha", label: "เธชเธดเธเธเนเธฒ", icon: Gamepad2 },
-  { href: "/topup", label: "เน€เธ•เธดเธกเน€เธเธดเธ", icon: Coins },
-  { href: "/wallet", label: "เธเธฃเธฐเน€เธเนเธฒ", icon: Backpack },
-  { href: "/contact", label: "เธ•เธดเธ”เธ•เนเธญเน€เธฃเธฒ", icon: MessageCircle },
+  { href: "/", label: "หน้าหลัก", icon: Home },
+  { href: "/gacha", label: "สินค้า", icon: Gamepad2 },
+  { href: "/topup", label: "เติมเงิน", icon: Coins },
+  { href: "/wallet", label: "กระเป๋า", icon: Backpack },
+  { href: "/contact", label: "ติดต่อเรา", icon: MessageCircle },
 ];
 
 const MOBILE_MENU_ID = "gacha-mobile-menu-toggle";
@@ -45,6 +45,22 @@ function getCategoryIcon(categoryId: string) {
   return PackageOpen;
 }
 
+function getCategoryLabel(category: ProductCategoryRecord) {
+  const fallbackLabels: Record<string, string> = {
+    all: "ทั้งหมด",
+    gachapon: "กาชาปอง",
+    gacha: "กาชาปอง",
+    figure: "ฟิกเกอร์/โมเดล",
+    figures: "ฟิกเกอร์/โมเดล",
+    model: "ฟิกเกอร์/โมเดล",
+    plush: "ตุ๊กตา",
+    doll: "ตุ๊กตา",
+    dolls: "ตุ๊กตา",
+  };
+
+  return fallbackLabels[category.id] ?? category.label;
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -54,7 +70,7 @@ export function Navbar() {
   const mobileMenuId = MOBILE_MENU_ID;
   const visibleLinks = links.filter((link) => user || (link.href !== "/topup" && link.href !== "/wallet"));
   const maskedUsername = user ? `${user.username.trim().slice(0, 3)}*****` : "";
-  const mobileCategories = [{ id: "all", label: "เธ—เธฑเนเธเธซเธกเธ”", createdAt: "" }, ...categories];
+  const mobileCategories = [{ id: "all", label: "ทั้งหมด", createdAt: "" }, ...categories];
 
   useEffect(() => {
     async function syncUser() {
@@ -105,7 +121,7 @@ export function Navbar() {
           className="nav-mobile-trigger"
           role="button"
           tabIndex={0}
-          aria-label="เน€เธเธดเธ”เน€เธกเธเธน"
+          aria-label="เปิดเมนู"
           onClick={(event) => {
             event.preventDefault();
             toggleMobileMenu();
@@ -120,7 +136,7 @@ export function Navbar() {
           <Menu size={24} strokeWidth={2.6} />
         </label>
 
-        <Link href="/" aria-label="Gacha Pop เธซเธเนเธฒเธซเธฅเธฑเธ" className="navbar-logo-link">
+        <Link href="/" aria-label="Gacha Pop หน้าหลัก" className="navbar-logo-link">
           <Logo />
         </Link>
 
@@ -143,49 +159,49 @@ export function Navbar() {
 
         {user ? (
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Link href="/topup" className="coin-wallet" aria-label={`เน€เธซเธฃเธตเธขเธเธเธเน€เธซเธฅเธทเธญ ${coins.toLocaleString("th-TH")} เน€เธ•เธดเธก Coin`}>
+            <Link href="/topup" className="coin-wallet" aria-label={`เหรียญคงเหลือ ${coins.toLocaleString("th-TH")} เติม Coin`}>
               <span className="coin-badge">C</span>
               <span>{coins.toLocaleString("th-TH")}</span>
               <span className="coin-wallet-plus">
                 <Plus size={17} strokeWidth={3} />
               </span>
             </Link>
-            <Link href="/profile" className="nav-profile-link" aria-label="เน€เธเธดเธ”เธซเธเนเธฒเนเธเธฃเนเธเธฅเน">
+            <Link href="/profile" className="nav-profile-link" aria-label="เปิดหน้าโปรไฟล์">
               <div className="avatar-pixel"><img src={normalizeAvatarUrl(user.avatarUrl)} alt={user.username} /></div>
               <div className="hidden leading-tight sm:block">
-                <p className="text-xs font-bold text-indigo-900">เธชเธงเธฑเธชเธ”เธต, {maskedUsername}</p>
-                <p className="text-[11px] text-violet-500">{user.role === "admin" ? "เธเธนเนเธ”เธนเนเธฅเธฃเธฐเธเธ" : "เธเธฃเนเธญเธกเธชเธธเนเธกเนเธฅเนเธง"}</p>
+                <p className="text-xs font-bold text-indigo-900">สวัสดี, {maskedUsername}</p>
+                <p className="text-[11px] text-violet-500">{user.role === "admin" ? "ผู้ดูแลระบบ" : "พร้อมสุ่มแล้ว"}</p>
               </div>
             </Link>
-            <button className="nav-logout-button" onClick={handleLogout} aria-label="เธญเธญเธเธเธฒเธเธฃเธฐเธเธ">
+            <button className="nav-logout-button" onClick={handleLogout} aria-label="ออกจากระบบ">
               <LogOut size={17} />
             </button>
           </div>
         ) : (
           <div className="nav-auth-actions">
-            <Link href="/login">เน€เธเนเธฒเธชเธนเนเธฃเธฐเธเธ</Link>
-            <Link href="/register">เธชเธกเธฑเธเธฃเธชเธกเธฒเธเธดเธ</Link>
+            <Link href="/login">เข้าสู่ระบบ</Link>
+            <Link href="/register">สมัครสมาชิก</Link>
           </div>
         )}
       </nav>
       </header>
 
-      <div className="nav-mobile-shell" aria-label="เน€เธกเธเธนเธกเธทเธญเธ–เธทเธญ">
+      <div className="nav-mobile-shell" aria-label="เมนูมือถือ">
           <label
             htmlFor={mobileMenuId}
             className="nav-mobile-backdrop"
-            aria-label="เธเธดเธ”เน€เธกเธเธน"
+            aria-label="ปิดเมนู"
           />
-          <aside className="nav-mobile-drawer" aria-label="เน€เธกเธเธนเธกเธทเธญเธ–เธทเธญ">
+          <aside className="nav-mobile-drawer" aria-label="เมนูมือถือ">
             <div className="nav-mobile-drawer-header">
               <Logo />
-              <label htmlFor={mobileMenuId} className="nav-mobile-close" aria-label="เธเธดเธ”เน€เธกเธเธน">
+              <label htmlFor={mobileMenuId} className="nav-mobile-close" aria-label="ปิดเมนู">
                 <X size={22} strokeWidth={2.8} />
               </label>
             </div>
 
             <div className="nav-mobile-drawer-body">
-              <p className="nav-mobile-section-title">เน€เธกเธเธน</p>
+              <p className="nav-mobile-section-title">เมนู</p>
               <div className="nav-mobile-link-grid">
                 {visibleLinks.map((link) => {
                   const Icon = link.icon;
@@ -204,7 +220,7 @@ export function Navbar() {
                 })}
               </div>
 
-              <p className="nav-mobile-section-title">เธซเธกเธงเธ”เธซเธกเธนเนเธชเธดเธเธเนเธฒ</p>
+              <p className="nav-mobile-section-title">หมวดหมู่สินค้า</p>
               <div className="nav-mobile-link-grid nav-mobile-category-grid">
                 {mobileCategories.map((category) => {
                   const Icon = category.id === "all" ? Home : getCategoryIcon(category.id);
@@ -217,13 +233,13 @@ export function Navbar() {
                       className="nav-mobile-link"
                     >
                       <Icon size={20} strokeWidth={2.5} />
-                      <span>{category.label}</span>
+                      <span>{getCategoryLabel(category)}</span>
                     </Link>
                   );
                 })}
               </div>
 
-              <p className="nav-mobile-note">เน€เธฅเธทเธญเธเน€เธกเธเธนเธซเธฃเธทเธญเธซเธกเธงเธ”เธซเธกเธนเนเนเธ”เนเธเธฒเธเธ•เธฃเธเธเธตเนเธเธเธกเธทเธญเธ–เธทเธญ</p>
+              <p className="nav-mobile-note">เลือกเมนูหรือหมวดหมู่ได้จากตรงนี้บนมือถือ</p>
             </div>
           </aside>
       </div>
