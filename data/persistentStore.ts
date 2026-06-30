@@ -1073,8 +1073,7 @@ function isDuplicateRowError(error: unknown) {
   return message.includes("23505") || message.toLowerCase().includes("duplicate");
 }
 
-function makeBootstrapUserRow(userId: string): DbUserRow {
-  const now = nowIso();
+function makeBootstrapUserRow(userId: string): Pick<DbUserRow, "id" | "username" | "email" | "pin" | "password_hash" | "role"> {
   const safeId = userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80) || "user";
 
   return {
@@ -1082,13 +1081,8 @@ function makeBootstrapUserRow(userId: string): DbUserRow {
     username: `user_${safeId}`,
     email: `${safeId}@gacha-pop.local`,
     pin: "000000",
-    phone: "",
-    avatar_url: "/avatars/hamster.png",
     password_hash: "server-bootstrap",
     role: "user",
-    suspended: false,
-    created_at: now,
-    updated_at: now,
   };
 }
 
@@ -1097,7 +1091,7 @@ async function ensureUserRow(userId: string) {
   const rows = await selectRows<Pick<DbUserRow, "id">>("users", query);
   if (rows[0]) return;
 
-  await supabaseRequest<DbUserRow[]>("/rest/v1/users", {
+  await supabaseRequest<Pick<DbUserRow, "id" | "username" | "email" | "pin" | "password_hash" | "role">[]>("/rest/v1/users", {
     method: "POST",
     prefer: "return=representation",
     body: JSON.stringify([makeBootstrapUserRow(userId)]),
