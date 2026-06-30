@@ -8,8 +8,6 @@ import {
   Bell,
   CalendarDays,
   ChevronRight,
-  Eye,
-  EyeOff,
   Gift,
   Home,
   LayoutDashboard,
@@ -105,7 +103,6 @@ export function ProfilePage() {
   const [addressMessage, setAddressMessage] = useState("");
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [activeSection, setActiveSection] = useState("profile-section");
-  const [showPin, setShowPin] = useState(false);
   const [profileReady, setProfileReady] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
@@ -464,17 +461,9 @@ export function ProfilePage() {
               <div className="profile-info-row">
                 <span>
                   <LockKeyhole size={24} />
-                  รหัส PIN 6 หลัก
+                  เบอร์โทรศัพท์
                 </span>
-                <strong>{showPin ? user.pin : "******"}</strong>
-                <button
-                  type="button"
-                  className="profile-pin-eye-button"
-                  onClick={() => setShowPin((current) => !current)}
-                  aria-label={showPin ? "ซ่อนรหัส PIN" : "แสดงรหัส PIN"}
-                >
-                  {showPin ? <EyeOff size={22} /> : <Eye size={22} />}
-                </button>
+                <strong>{user.phone || "-"}</strong>
               </div>
             </div>
           </section>

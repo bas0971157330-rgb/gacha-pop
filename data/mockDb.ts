@@ -513,7 +513,18 @@ export async function syncSharedStoreFromServer(options: { notify?: boolean; for
     const previousTopupLogs = getTopupLogs();
     const previousRollHistory = getRollHistory();
 
-    const users = Array.isArray(remoteStore.users) ? mergeUsers([], remoteStore.users) : previousUsers;
+    const previousActiveUser = activeUserId ? previousUsers.find((user) => user.id === activeUserId) : null;
+    const users = Array.isArray(remoteStore.users)
+      ? mergeUsers(previousUsers, remoteStore.users).map((user) =>
+          previousActiveUser && user.id === previousActiveUser.id
+            ? {
+                ...user,
+                phone: previousActiveUser.phone || user.phone,
+                avatarUrl: previousActiveUser.avatarUrl || user.avatarUrl,
+              }
+            : user,
+        )
+      : previousUsers;
     const orders = Array.isArray(remoteStore.orders) ? mergeOrders([], remoteStore.orders) : previousOrders;
     const notifications = Array.isArray(remoteStore.notifications)
       ? mergeNotifications([], remoteStore.notifications)
