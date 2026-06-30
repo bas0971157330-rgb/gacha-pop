@@ -1050,6 +1050,20 @@ function isBrokenAtomicRpcError(error: unknown) {
   return message.includes("42702") || message.toLowerCase().includes("ambiguous");
 }
 
+function isRecoverablePurchaseRpcError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalized = message.toLowerCase();
+
+  return (
+    isBrokenAtomicRpcError(error) ||
+    message.includes("PGRST202") ||
+    message.includes("PGRST301") ||
+    normalized.includes("could not find the function") ||
+    normalized.includes("function public.purchase_product_atomic") ||
+    normalized.includes("permission denied for function")
+  );
+}
+
 function restEq(value: string) {
   return encodeURIComponent(value);
 }
@@ -1227,7 +1241,7 @@ export async function purchaseProductAtomic(userId: string, productId: string, p
       price_coin: priceCoin,
     });
   } catch (error) {
-    if (isBrokenAtomicRpcError(error)) {
+    if (isRecoverablePurchaseRpcError(error)) {
       return purchaseProductViaRestFallback(userId, productId, priceCoin);
     }
     throw error;
