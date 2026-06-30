@@ -1068,7 +1068,48 @@ function restEq(value: string) {
   return encodeURIComponent(value);
 }
 
-async function getWalletForUpdate(userId: string) {
+function isDuplicateRowError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.includes("23505") || message.toLowerCase().includes("duplicate");
+}
+
+function makeBootstrapUserRow(userId: string): DbUserRow {
+  const now = nowIso();
+  const safeId = userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80) || "user";
+
+  return {
+    id: userId,
+    username: `user_${safeId}`,
+    email: `${safeId}@gacha-pop.local`,
+    pin: "000000",
+    phone: "",
+    avatar_url: "/avatars/hamster.png",
+    password_hash: "server-bootstrap",
+    role: "user",
+    suspended: false,
+    created_at: now,
+    updated_at: now,
+  };
+}
+
+async function ensureUserRow(userId: string) {
+  const query = `select=id&id=eq.${restEq(userId)}&limit=1`;
+  const rows = await selectRows<Pick<DbUserRow, "id">>("users", query);
+  if (rows[0]) return;
+
+  await supabaseRequest<DbUserRow[]>("/rest/v1/users", {
+    method: "POST",
+    prefer: "return=representation",
+    body: JSON.stringify([makeBootstrapUserRow(userId)]),
+  }).catch((error) => {
+    if (!isDuplicateRowError(error)) throw error;
+  });
+}
+
+async function ensureUserAndWallet(userId: string) {
+  if (!userId) throw new Error("USER_NOT_FOUND");
+
+  await ensureUserRow(userId);
   const query = `select=user_id,coins,updated_at&user_id=eq.${restEq(userId)}&limit=1`;
   const rows = await selectRows<DbWalletRow>("wallets", query);
   if (rows[0]) return rows[0];
@@ -1078,13 +1119,16 @@ async function getWalletForUpdate(userId: string) {
     prefer: "return=representation",
     body: JSON.stringify([{ user_id: userId, coins: 0, updated_at: nowIso() }]),
   }).catch((error) => {
-    const message = error instanceof Error ? error.message : String(error ?? "");
-    if (!message.includes("23505") && !message.includes("duplicate")) throw error;
+    if (!isDuplicateRowError(error)) throw error;
   });
 
   const createdRows = await selectRows<DbWalletRow>("wallets", query);
   if (!createdRows[0]) throw new Error("WALLET_NOT_FOUND");
   return createdRows[0];
+}
+
+async function getWalletForUpdate(userId: string) {
+  return ensureUserAndWallet(userId);
 }
 
 async function updateWalletWithExpectedCoins(userId: string, currentCoins: number, nextCoins: number) {
