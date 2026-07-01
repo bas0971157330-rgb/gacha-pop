@@ -304,10 +304,19 @@ export function AdminDashboard() {
   const refreshFromSupabase = useCallback(async () => {
     try {
       await syncSharedStoreFromServer({ notify: false, force: true });
+      console.info("ADMIN_SYNC_OK", {
+        sharedStoreOk: true,
+        usersCount: getAdminUserRows().length,
+        ordersCount: getOrders().length,
+        notificationsCount: getNotifications().length,
+        topupLogsCount: getTopupLogs().length,
+        currentUserId: getCurrentUser()?.id ?? "",
+      });
       refresh();
     } catch (error) {
       console.warn("ADMIN_SYNC_FAILED", {
         stage: "ADMIN_SYNC_FAILED",
+        sharedStoreOk: false,
         message: error instanceof Error ? error.message : String(error ?? ""),
       });
     }

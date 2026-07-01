@@ -540,8 +540,13 @@ export async function syncSharedStoreFromServer(options: { notify?: boolean; for
 
   sharedStoreSyncPromise = (async () => {
   try {
+    await repairActiveUserSync("ACTIVE_USER_SYNC_FAILED");
+
     const response = await fetch("/api/shared-store", { cache: "no-store" });
-    if (!response.ok) return lastSharedStoreSyncResult;
+    if (!response.ok) {
+      console.warn("SHARED_STORE_SYNC_FAILED", { stage: "SHARED_STORE_SYNC_FAILED", message: response.statusText });
+      return lastSharedStoreSyncResult;
+    }
     const remoteStore = (await response.json()) as Partial<SharedStoreSnapshot>;
 
     const activeUserId = getCurrentUserId();
@@ -646,7 +651,11 @@ export async function syncSharedStoreFromServer(options: { notify?: boolean; for
 
     lastSharedStoreSyncResult = { users, orders, notifications, coupons, inventories, shippingAddresses, coinLogs, topupLogs, rollHistory };
     return lastSharedStoreSyncResult;
-  } catch {
+  } catch (error) {
+    console.warn("SHARED_STORE_SYNC_FAILED", {
+      stage: "SHARED_STORE_SYNC_FAILED",
+      message: error instanceof Error ? error.message : String(error ?? ""),
+    });
     return lastSharedStoreSyncResult;
   }
   })().finally(() => {

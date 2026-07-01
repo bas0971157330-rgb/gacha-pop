@@ -13,9 +13,9 @@ const noStoreHeaders = {
   Pragma: "no-cache",
 };
 
-function errorResponse(error: unknown) {
+function errorResponse(error: unknown, stage = "SHARED_STORE_SYNC_FAILED") {
   const message = error instanceof Error ? error.message : "Unknown database error";
-  console.warn("SHARED_STORE_SYNC_FAILED", { stage: "SHARED_STORE_SYNC_FAILED", message });
+  console.warn(stage, { stage, message });
   return NextResponse.json({ ok: false, error: message }, { status: 500, headers: noStoreHeaders });
 }
 
@@ -24,7 +24,7 @@ export async function GET() {
     const store = await getSharedStoreFromDatabase();
     return NextResponse.json(store, { headers: noStoreHeaders });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, "SHARED_STORE_GET_FAILED");
   }
 }
 
@@ -35,6 +35,6 @@ export async function POST(request: Request) {
     const store = await getSharedStoreFromDatabase();
     return NextResponse.json(store, { headers: noStoreHeaders });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, "SHARED_STORE_SYNC_FAILED");
   }
 }

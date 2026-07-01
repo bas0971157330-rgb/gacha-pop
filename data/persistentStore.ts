@@ -22,8 +22,8 @@ type DbUserRow = {
   username: string;
   email: string;
   pin: string;
-  phone: string | null;
-  avatar_url: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
   password_hash: string;
   role: UserRole;
   suspended: boolean | null;
@@ -553,8 +553,6 @@ function userToRow(user: UserRecord): DbUserRow {
     username: user.username,
     email: user.email.toLowerCase(),
     pin: user.pin,
-    phone: user.phone ?? "",
-    avatar_url: user.avatarUrl ?? "",
     password_hash: user.passwordHash,
     role: user.role,
     suspended: Boolean(user.suspended),
@@ -932,6 +930,15 @@ async function upsertPublicStore(store: Partial<PublicStoreSnapshot>) {
   }
 }
 
+async function selectStoreRows<T>(stage: string, table: string, query: string) {
+  try {
+    return await selectRows<T>(table, query);
+  } catch (error) {
+    logSafeServerError(stage, error);
+    return [];
+  }
+}
+
 async function upsertSharedStore(store: Partial<SharedStoreSnapshot> & SharedStoreWriteOptions) {
   if (!isSupabaseConfigured()) return;
   if (store.users && store.users.length > 0) await upsertUsers(normalizeUsers(store.users), { preserveWallets: store.preserveWallets });
@@ -1047,16 +1054,16 @@ export async function getSharedStoreFromDatabase(): Promise<SharedStoreSnapshot>
 
   const [users, wallets, orders, notifications, coupons, inventory, shippingAddresses, coinLogs, topupLogs, rollHistory] =
     await Promise.all([
-      selectRows<DbUserRow>("users", "select=id,username,email,pin,phone,avatar_url,password_hash,role,suspended,created_at,updated_at&order=created_at.asc"),
-      selectRows<DbWalletRow>("wallets", "select=user_id,coins,updated_at&order=updated_at.desc"),
-      selectRows<DbOrderRow>("orders", "select=id,user_id,username,items,receiver_name,phone,address,tracking_number,status,shipping_fee,coupon_code,coupon_type,coupon_discount_percent,created_at,updated_at&order=created_at.desc"),
-      selectRows<DbNotificationRow>("admin_notifications", "select=id,type,title,message,is_read,created_at&order=created_at.desc"),
-      selectRows<DbCouponRow>("coupons", "select=id,code,type,discount_percent,max_uses,claimed_by_user_ids,used_by_user_ids,created_at,expires_at&order=created_at.desc"),
-      selectRows<DbInventoryRow>("inventory", "select=id,user_id,reward_id,name,image,quantity,status,selected_for_shipping,selected_quantity,created_at,updated_at&order=updated_at.desc"),
-      selectRows<DbAddressRow>("shipping_addresses", "select=user_id,receiver_name,phone,detail,house_no,road,province,district,subdistrict,postal_code,updated_at"),
-      selectRows<DbCoinLogRow>("coin_logs", "select=id,user_id,admin_id,amount,reason,created_at&order=created_at.desc"),
-      selectRows<DbTopupLogRow>("topup_logs", "select=id,user_id,amount,status,created_at&order=created_at.desc"),
-      selectRows<DbRollHistoryRow>("roll_history", "select=id,user_id,reward_name,machine_name,created_at&order=created_at.desc"),
+      selectStoreRows<DbUserRow>("USERS_SELECT_FAILED", "users", "select=id,username,email,pin,password_hash,role,suspended,created_at,updated_at&order=created_at.asc"),
+      selectStoreRows<DbWalletRow>("USERS_SELECT_FAILED", "wallets", "select=user_id,coins,updated_at&order=updated_at.desc"),
+      selectStoreRows<DbOrderRow>("ORDERS_SELECT_FAILED", "orders", "select=id,user_id,username,items,receiver_name,phone,address,tracking_number,status,shipping_fee,coupon_code,coupon_type,coupon_discount_percent,created_at,updated_at&order=created_at.desc"),
+      selectStoreRows<DbNotificationRow>("NOTIFICATIONS_SELECT_FAILED", "admin_notifications", "select=id,type,title,message,is_read,created_at&order=created_at.desc"),
+      selectStoreRows<DbCouponRow>("SHARED_STORE_GET_FAILED", "coupons", "select=id,code,type,discount_percent,max_uses,claimed_by_user_ids,used_by_user_ids,created_at,expires_at&order=created_at.desc"),
+      selectStoreRows<DbInventoryRow>("SHARED_STORE_GET_FAILED", "inventory", "select=id,user_id,reward_id,name,image,quantity,status,selected_for_shipping,selected_quantity,created_at,updated_at&order=updated_at.desc"),
+      selectStoreRows<DbAddressRow>("SHARED_STORE_GET_FAILED", "shipping_addresses", "select=user_id,receiver_name,phone,detail,house_no,road,province,district,subdistrict,postal_code,updated_at"),
+      selectStoreRows<DbCoinLogRow>("SHARED_STORE_GET_FAILED", "coin_logs", "select=id,user_id,admin_id,amount,reason,created_at&order=created_at.desc"),
+      selectStoreRows<DbTopupLogRow>("SHARED_STORE_GET_FAILED", "topup_logs", "select=id,user_id,amount,status,created_at&order=created_at.desc"),
+      selectStoreRows<DbRollHistoryRow>("SHARED_STORE_GET_FAILED", "roll_history", "select=id,user_id,reward_name,machine_name,created_at&order=created_at.desc"),
     ]);
 
   const walletByUserId = new Map(wallets.map((wallet) => [wallet.user_id, wallet]));
@@ -1100,6 +1107,7 @@ export async function saveSharedStoreToDatabase(store: Partial<SharedStoreSnapsh
     coinLogs: store.coinLogs,
     topupLogs: store.topupLogs,
     rollHistory: store.rollHistory,
+    preserveWallets: store.preserveWallets,
   });
 }
 
