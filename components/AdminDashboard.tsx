@@ -33,7 +33,7 @@ import {
   UserCog,
   UserRound,
 } from "lucide-react";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { UrlImage } from "@/components/UrlImage";
 import { deleteCatalogRecord, fetchCatalogSnapshot } from "@/data/catalogSync";
 import {
@@ -74,6 +74,7 @@ import {
   saveProducts,
   suspendUser,
   syncSharedStoreFromServer,
+  type AdminNotification,
   type AdminUserRow,
   type CoinLog,
   type OrderRecord,
@@ -237,6 +238,7 @@ export function AdminDashboard() {
   const [categories, setCategories] = useState<ProductCategoryRecord[]>([]);
   const [popupAds, setPopupAds] = useState<PopupAdRecord[]>([]);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [coinLogs, setCoinLogs] = useState<CoinLog[]>([]);
   const [topupLogs, setTopupLogs] = useState<TopupLog[]>([]);
   const [rollHistory, setRollHistory] = useState<RollHistory[]>([]);
@@ -284,7 +286,7 @@ export function AdminDashboard() {
     savePopupAds(nextAds, false, false);
   }
 
-  function refresh() {
+  const refresh = useCallback(() => {
     const current = getCurrentUser();
     setAdmin(current?.role === "admin" ? current : null);
     setUsers(getAdminUserRows());
@@ -293,16 +295,22 @@ export function AdminDashboard() {
     setPopupAds(getPopupAds());
     setCoupons(getCoupons());
     setOrders(getOrders());
+    setNotifications(getNotifications());
     setCoinLogs(getCoinLogs());
     setTopupLogs(getTopupLogs());
     setRollHistory(getRollHistory());
-  }
+  }, []);
+
+  const refreshFromSupabase = useCallback(async () => {
+    await syncSharedStoreFromServer({ notify: false, force: true });
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function refreshSharedState() {
-      await syncSharedStoreFromServer({ notify: false });
+      await syncSharedStoreFromServer({ notify: false, force: true });
       if (isMounted) refresh();
     }
 
@@ -322,14 +330,14 @@ export function AdminDashboard() {
         event.key === USERS_STORAGE_KEY ||
         event.key === COUPONS_STORAGE_KEY
       ) {
-        refresh();
+        void refreshFromSupabase();
       }
     }
 
     window.addEventListener("gacha-auth-updated", refresh);
-    window.addEventListener("gacha-users-updated", refresh);
-    window.addEventListener("gacha-orders-updated", refresh);
-    window.addEventListener("gacha-notifications-updated", refresh);
+    window.addEventListener("gacha-users-updated", refreshFromSupabase);
+    window.addEventListener("gacha-orders-updated", refreshFromSupabase);
+    window.addEventListener("gacha-notifications-updated", refreshFromSupabase);
     window.addEventListener("gacha-products-updated", refresh);
     window.addEventListener("gacha-categories-updated", refresh);
     window.addEventListener("gacha-popup-ads-updated", refresh);
@@ -339,29 +347,29 @@ export function AdminDashboard() {
     return () => {
       isMounted = false;
       window.removeEventListener("gacha-auth-updated", refresh);
-      window.removeEventListener("gacha-users-updated", refresh);
-      window.removeEventListener("gacha-orders-updated", refresh);
-      window.removeEventListener("gacha-notifications-updated", refresh);
+      window.removeEventListener("gacha-users-updated", refreshFromSupabase);
+      window.removeEventListener("gacha-orders-updated", refreshFromSupabase);
+      window.removeEventListener("gacha-notifications-updated", refreshFromSupabase);
       window.removeEventListener("gacha-products-updated", refresh);
       window.removeEventListener("gacha-categories-updated", refresh);
       window.removeEventListener("gacha-popup-ads-updated", refresh);
       window.removeEventListener("gacha-coupons-updated", refresh);
       window.removeEventListener("storage", refreshFromStorage);
     };
-  }, []);
+  }, [refresh, refreshFromSupabase]);
 
   useEffect(() => {
-    if (activeSection !== "orders") return;
+    if (!["users", "coins", "orders", "rolls", "topups"].includes(activeSection)) return;
 
     let isMounted = true;
-    syncSharedStoreFromServer({ notify: false }).then(() => {
+    syncSharedStoreFromServer({ notify: false, force: true }).then(() => {
       if (isMounted) refresh();
     });
 
     return () => {
       isMounted = false;
     };
-  }, [activeSection]);
+  }, [activeSection, refresh]);
 
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -374,7 +382,13 @@ export function AdminDashboard() {
     );
   }, [search, users]);
 
-  const unreadNotifications = getNotifications().filter((notification) => !notification.isRead).length;
+  const unreadNotifications = useMemo(
+    () =>
+      notifications.filter((notification) => !notification.isRead).length +
+      orders.filter((order) => order.status === "pending").length +
+      topupLogs.filter((log) => log.status === "pending").length,
+    [notifications, orders, topupLogs],
+  );
   const selectedCoinUser = users.find((user) => user.id === coinUserId || user.username.toLowerCase() === coinUserId.toLowerCase());
   const dropItemTotal = dropTotal(dropItems);
   const formProductImages = useMemo(() => normalizeFormImages(productForm.image, productImages), [productForm.image, productImages]);

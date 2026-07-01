@@ -857,7 +857,11 @@ function rowToCoupon(row: DbCouponRow): import("@/data/coupons").CouponRecord {
 }
 
 async function insertMissingWallets(users: UserRecord[]) {
-  const rows = users.map(walletToRow);
+  const rows = users.map((user) => ({
+    user_id: user.id,
+    coins: 0,
+    updated_at: user.createdAt || nowIso(),
+  }));
   if (rows.length === 0) return;
 
   await supabaseRequest<DbWalletRow[]>("/rest/v1/wallets?on_conflict=user_id", {
@@ -867,14 +871,29 @@ async function insertMissingWallets(users: UserRecord[]) {
   });
 }
 
+async function insertMissingUsers(users: UserRecord[]) {
+  const rows = users.map((user) => ({
+    ...userToRow(user),
+    role: "user" as UserRole,
+  }));
+  if (rows.length === 0) return;
+
+  await supabaseRequest<DbUserRow[]>("/rest/v1/users?on_conflict=id", {
+    method: "POST",
+    prefer: "resolution=ignore-duplicates,return=representation",
+    body: JSON.stringify(rows),
+  });
+}
+
 async function upsertUsers(users: UserRecord[], options: SharedStoreWriteOptions = {}) {
   if (users.length === 0) return;
-  await upsertRows("users", users.map(userToRow), "id");
   if (options.preserveWallets) {
+    await insertMissingUsers(users);
     await insertMissingWallets(users);
     return;
   }
 
+  await upsertRows("users", users.map(userToRow), "id");
   await upsertRows("wallets", users.map(walletToRow), "user_id");
 }
 

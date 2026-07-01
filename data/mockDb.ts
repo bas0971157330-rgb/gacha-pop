@@ -1208,7 +1208,7 @@ export async function registerUser(input: {
     phone,
     avatarUrl: normalizeAvatarUrl(input.avatarUrl ?? pickRandomAvatarUrl()),
     passwordHash: await hashPassword(input.password),
-    role: username.toLowerCase() === ADMIN_USERNAME ? "admin" : "user",
+    role: "user",
     coins: DEFAULT_COIN_BALANCE,
     coinUpdatedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
@@ -1224,9 +1224,16 @@ export async function registerUser(input: {
 export async function loginUser(identifier: string, password: string, remember: boolean) {
   await ensureMockDatabase();
   const normalizedIdentifier = identifier.trim().toLowerCase();
-  const user = getUsers().find(
+  let user = getUsers().find(
     (item) => item.username.toLowerCase() === normalizedIdentifier || item.email.toLowerCase() === normalizedIdentifier,
   );
+
+  if (!user) {
+    await syncSharedStoreFromServer({ notify: false, force: true });
+    user = getUsers().find(
+      (item) => item.username.toLowerCase() === normalizedIdentifier || item.email.toLowerCase() === normalizedIdentifier,
+    );
+  }
 
   if (!user) throw new Error("ไม่พบบัญชีผู้ใช้");
   if (user.suspended) throw new Error("บัญชีนี้ถูกระงับการใช้งาน");
