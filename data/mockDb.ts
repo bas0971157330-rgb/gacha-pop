@@ -1371,46 +1371,72 @@ export async function createAdminUser(input: {
   return toSafeUser(adminUser);
 }
 
-export function addCoinsToUser(userId: string, adminId: string, amount: number, reason: string) {
+export async function addCoinsToUser(userId: string, adminId: string, amount: number, reason: string) {
   const users = getUsers();
   const user = users.find((item) => item.id === userId);
   if (!user) throw new Error("ไม่พบผู้ใช้");
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("INVALID_COIN_AMOUNT");
+
+  let nextCoins = Math.max(0, user.coins + amount);
+  try {
+    const response = await fetch("/api/wallet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, delta: amount, reason }),
+    });
+    const data = (await response.json().catch(() => ({}))) as { coins?: number; error?: string };
+    if (!response.ok) throw new Error(data.error ?? "WALLET_UPDATE_FAILED");
+    nextCoins = Math.max(0, Number(data.coins ?? nextCoins));
+  } catch (error) {
+    console.warn("ADMIN_ADD_COIN_FAILED", {
+      stage: "ADMIN_ADD_COIN_FAILED",
+      table: "wallets",
+      userId,
+      recordId: userId,
+      message: error instanceof Error ? error.message : String(error ?? ""),
+    });
+    throw error;
+  }
 
   const coinUpdatedAt = new Date().toISOString();
   const nextUsers = users.map((item) =>
-    item.id === userId ? { ...item, coins: Math.max(0, item.coins + amount), coinUpdatedAt } : item,
+    item.id === userId ? { ...item, coins: nextCoins, coinUpdatedAt } : item,
   );
-  saveUsers(nextUsers);
-
-  const log: CoinLog = {
-    id: makeId("coinlog"),
-    userId,
-    adminId,
-    amount,
-    reason,
-    createdAt: new Date().toISOString(),
-  };
-  const nextLogs = [log, ...getCoinLogs()];
-  writeList(COIN_LOGS_STORAGE_KEY, nextLogs);
-  publishSharedStoreSnapshot({ coinLogs: nextLogs });
+  saveUsers(nextUsers, { syncRemote: false });
 
   if (getCurrentUserId() === userId) {
     window.dispatchEvent(new CustomEvent("gacha-wallet-updated"));
   }
 
-  saveNotifications([
-    {
-      id: makeId("notice"),
-      type: "coin",
-      title: "มีการเพิ่ม Coin",
-      message: `เพิ่ม ${amount} Coin ให้ ${user.username}`,
-      isRead: false,
-      createdAt: new Date().toISOString(),
-    },
-    ...getNotifications(),
-  ]);
+  const notification: AdminNotification = {
+    id: makeId("notice"),
+    type: "coin",
+    title: "มีการเพิ่ม Coin",
+    message: `เพิ่ม ${amount} Coin ให้ ${user.username}`,
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  };
+  const nextNotifications = [notification, ...getNotifications()];
+  writeList(NOTIFICATIONS_STORAGE_KEY, nextNotifications);
+  window.dispatchEvent(new CustomEvent("gacha-users-updated"));
+  window.dispatchEvent(new CustomEvent("gacha-notifications-updated"));
 
-  return log;
+  const updatedUser = nextUsers.find((item) => item.id === userId);
+  await syncSharedStoreNow({
+    users: updatedUser ? [updatedUser] : [],
+    notifications: nextNotifications,
+    preserveWallets: true,
+  }).catch((error) => {
+    console.warn("ADMIN_NOTIFICATION_SYNC_FAILED", {
+      stage: "ADMIN_NOTIFICATION_SYNC_FAILED",
+      table: "admin_notifications",
+      userId,
+      recordId: notification.id,
+      message: error instanceof Error ? error.message : String(error ?? ""),
+    });
+  });
+
+  return { userId, adminId, amount, reason, coins: nextCoins };
 }
 
 export function suspendUser(userId: string) {

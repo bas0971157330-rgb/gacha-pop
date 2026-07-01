@@ -57,6 +57,8 @@ import {
   ensureMockDatabase,
   NOTIFICATIONS_STORAGE_KEY,
   ORDERS_STORAGE_KEY,
+  ROLL_HISTORY_STORAGE_KEY,
+  TOPUP_LOGS_STORAGE_KEY,
   USERS_STORAGE_KEY,
   getCoinLogs,
   getCurrentUser,
@@ -303,6 +305,7 @@ export function AdminDashboard() {
 
   const refreshFromSupabase = useCallback(async () => {
     try {
+      await syncCatalogBeforeRefresh();
       await syncSharedStoreFromServer({ notify: false, force: true });
       console.info("ADMIN_SYNC_OK", {
         sharedStoreOk: true,
@@ -344,7 +347,9 @@ export function AdminDashboard() {
         event.key === ORDERS_STORAGE_KEY ||
         event.key === NOTIFICATIONS_STORAGE_KEY ||
         event.key === USERS_STORAGE_KEY ||
-        event.key === COUPONS_STORAGE_KEY
+        event.key === COUPONS_STORAGE_KEY ||
+        event.key === ROLL_HISTORY_STORAGE_KEY ||
+        event.key === TOPUP_LOGS_STORAGE_KEY
       ) {
         void refreshFromSupabase();
       }
@@ -354,10 +359,12 @@ export function AdminDashboard() {
     window.addEventListener("gacha-users-updated", refreshFromSupabase);
     window.addEventListener("gacha-orders-updated", refreshFromSupabase);
     window.addEventListener("gacha-notifications-updated", refreshFromSupabase);
-    window.addEventListener("gacha-products-updated", refresh);
-    window.addEventListener("gacha-categories-updated", refresh);
-    window.addEventListener("gacha-popup-ads-updated", refresh);
-    window.addEventListener("gacha-coupons-updated", refresh);
+    window.addEventListener("gacha-products-updated", refreshFromSupabase);
+    window.addEventListener("gacha-categories-updated", refreshFromSupabase);
+    window.addEventListener("gacha-popup-ads-updated", refreshFromSupabase);
+    window.addEventListener("gacha-coupons-updated", refreshFromSupabase);
+    window.addEventListener("gacha-roll-history-updated", refreshFromSupabase);
+    window.addEventListener("gacha-wallet-updated", refreshFromSupabase);
     window.addEventListener("storage", refreshFromStorage);
 
     return () => {
@@ -366,26 +373,28 @@ export function AdminDashboard() {
       window.removeEventListener("gacha-users-updated", refreshFromSupabase);
       window.removeEventListener("gacha-orders-updated", refreshFromSupabase);
       window.removeEventListener("gacha-notifications-updated", refreshFromSupabase);
-      window.removeEventListener("gacha-products-updated", refresh);
-      window.removeEventListener("gacha-categories-updated", refresh);
-      window.removeEventListener("gacha-popup-ads-updated", refresh);
-      window.removeEventListener("gacha-coupons-updated", refresh);
+      window.removeEventListener("gacha-products-updated", refreshFromSupabase);
+      window.removeEventListener("gacha-categories-updated", refreshFromSupabase);
+      window.removeEventListener("gacha-popup-ads-updated", refreshFromSupabase);
+      window.removeEventListener("gacha-coupons-updated", refreshFromSupabase);
+      window.removeEventListener("gacha-roll-history-updated", refreshFromSupabase);
+      window.removeEventListener("gacha-wallet-updated", refreshFromSupabase);
       window.removeEventListener("storage", refreshFromStorage);
     };
   }, [refresh, refreshFromSupabase]);
 
   useEffect(() => {
-    if (!["users", "coins", "orders", "rolls", "topups"].includes(activeSection)) return;
+    if (!["dashboard", "users", "coins", "products", "categories", "ads", "coupons", "admins", "orders", "rolls", "topups"].includes(activeSection)) return;
 
     let isMounted = true;
-    syncSharedStoreFromServer({ notify: false, force: true }).then(() => {
+    refreshFromSupabase().then(() => {
       if (isMounted) refresh();
     });
 
     return () => {
       isMounted = false;
     };
-  }, [activeSection, refresh]);
+  }, [activeSection, refresh, refreshFromSupabase]);
 
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -501,7 +510,7 @@ export function AdminDashboard() {
     }));
   }
 
-  function handleAddCoin(event: FormEvent<HTMLFormElement>) {
+  async function handleAddCoin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!admin) return;
 
@@ -519,11 +528,22 @@ export function AdminDashboard() {
       return;
     }
 
-    addCoinsToUser(selectedCoinUser.id, admin.id, amount, coinReason.trim());
+    try {
+      await addCoinsToUser(selectedCoinUser.id, admin.id, amount, coinReason.trim());
     setCoinAmount("");
     setCoinReason("");
-    refresh();
+      await refreshFromSupabase();
     showToast(`เพิ่ม ${amount} Coin ให้ ${selectedCoinUser.username} แล้ว`);
+    } catch (error) {
+      console.warn("ADMIN_ADD_COIN_FAILED", {
+        stage: "ADMIN_ADD_COIN_FAILED",
+        table: "wallets",
+        userId: selectedCoinUser.id,
+        recordId: selectedCoinUser.id,
+        message: error instanceof Error ? error.message : String(error ?? ""),
+      });
+      showToast("เพิ่ม Coin ไม่สำเร็จ");
+    }
   }
 
   function updateDropItem(itemId: string, patch: Partial<ProductDropItem>) {
