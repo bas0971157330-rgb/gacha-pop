@@ -128,3 +128,38 @@ After every task, always summarize:
 - Performance impact
 - Risks
 - Next recommended step
+
+## 13. Safe Deployment Policy
+
+For normal safe code fixes, after the fix is complete:
+
+1. Check that the worktree is clean or use a clean worktree.
+2. Run `pnpm build`.
+3. If build fails, stop immediately.
+4. If build passes, commit only files related to the task.
+5. Push to `deploy-safe-setup-gacha-pop`.
+6. Deploy Preview first.
+7. If Preview deployment succeeds, deploy Production to `www.gachapop-th.xyz`.
+
+Production command:
+
+```bash
+pnpm dlx vercel deploy --prod --yes
+```
+
+Never deploy Production automatically if the task involves:
+
+- Deleting data
+- Clearing inventory
+- Database schema changes
+- Wallet or coin balance logic
+- Purchase or gacha logic
+- Admin permission/security logic
+- Environment variables or secrets
+- Failed build
+- Dirty worktree
+- Unresolved git conflict
+
+Do not expose secrets.
+Do not print environment variable values.
+Do not force push.
