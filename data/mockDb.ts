@@ -1460,7 +1460,7 @@ export function formatShippingAddress(address: ShippingAddress) {
     .join(" ");
 }
 
-export function createShippingOrder(
+export async function createShippingOrder(
   items: InventoryItem[],
   address: ShippingAddress,
   options?: {
@@ -1515,9 +1515,20 @@ export function createShippingOrder(
 
   writeList(ORDERS_STORAGE_KEY, nextOrders);
   writeList(NOTIFICATIONS_STORAGE_KEY, nextNotifications);
-  publishSharedStoreSnapshot({
-    orders: nextOrders,
-    notifications: nextNotifications,
+  await syncSharedStoreNow({
+    users: [user],
+    orders: [order],
+    notifications: [nextNotifications[0]],
+    preserveWallets: true,
+  }).catch((error) => {
+    console.warn("ADMIN_ORDER_SYNC_FAILED", {
+      stage: "ADMIN_ORDER_SYNC_FAILED",
+      table: "orders",
+      userId,
+      recordId: order.id,
+      message: error instanceof Error ? error.message : String(error ?? ""),
+    });
+    throw error;
   });
   window.dispatchEvent(new CustomEvent("gacha-orders-updated"));
   window.dispatchEvent(new CustomEvent("gacha-notifications-updated"));

@@ -347,7 +347,7 @@ export function InventoryPage() {
     setShowConfirm(true);
   }
 
-  function confirmShipping() {
+  async function confirmShipping() {
     if (!hasSelectedItems) return;
     if (!hasShippingAddress) {
       showToast("กรุณาบันทึกที่อยู่จัดส่งก่อน");
@@ -389,12 +389,24 @@ export function InventoryPage() {
     });
 
     setCoins(nextCoinBalance);
-    const order = createShippingOrder(shippingItems, address, {
-      shippingFee: finalShippingFee,
-      couponCode: selectedCoupon?.code,
-      couponType: selectedCoupon?.type,
-      couponDiscountPercent: selectedCoupon?.discountPercent,
-    });
+    let order: OrderRecord;
+    try {
+      order = await createShippingOrder(shippingItems, address, {
+        shippingFee: finalShippingFee,
+        couponCode: selectedCoupon?.code,
+        couponType: selectedCoupon?.type,
+        couponDiscountPercent: selectedCoupon?.discountPercent,
+      });
+    } catch (error) {
+      console.warn("ADMIN_ORDER_SYNC_FAILED", {
+        stage: "ADMIN_ORDER_SYNC_FAILED",
+        table: "orders",
+        userId: getCurrentUserId(),
+        message: error instanceof Error ? error.message : String(error ?? ""),
+      });
+      showToast("ส่งคำขอจัดส่งไม่สำเร็จ กรุณาลองใหม่");
+      return;
+    }
     if (selectedCoupon) {
       markCouponUsed(selectedCoupon.id, getCurrentUserId());
       setSelectedCouponId("");
