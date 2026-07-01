@@ -15,6 +15,7 @@ const noStoreHeaders = {
 
 function errorResponse(error: unknown) {
   const message = error instanceof Error ? error.message : "Unknown database error";
+  console.warn("SHARED_STORE_SYNC_FAILED", { stage: "SHARED_STORE_SYNC_FAILED", message });
   return NextResponse.json({ ok: false, error: message }, { status: 500, headers: noStoreHeaders });
 }
 

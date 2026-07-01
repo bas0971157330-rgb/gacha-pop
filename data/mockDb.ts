@@ -362,6 +362,28 @@ function syncUserRecord(user: UserRecord) {
   return syncSharedStoreNow({ users: [user], preserveWallets: true });
 }
 
+function logSafeSyncError(stage: string, user: Pick<UserRecord, "id" | "username">, error: unknown) {
+  console.warn(stage, {
+    stage,
+    userId: user.id,
+    username: user.username,
+    message: error instanceof Error ? error.message : String(error ?? ""),
+  });
+}
+
+export async function repairActiveUserSync(stage = "ACTIVE_USER_SYNC_FAILED") {
+  const user = getCurrentUser();
+  if (!user) return null;
+
+  try {
+    await syncUserRecord(user);
+    return user;
+  } catch (error) {
+    logSafeSyncError(stage, user, error);
+    return null;
+  }
+}
+
 function publishSharedStoreSnapshot(value: SharedStoreSyncPayload = {}) {
   if (!canUseStorage()) return;
   syncSharedStore({
@@ -592,6 +614,10 @@ export async function syncSharedStoreFromServer(options: { notify?: boolean; for
     if (coinLogsChanged) writeList(COIN_LOGS_STORAGE_KEY, coinLogs);
     if (topupLogsChanged) writeList(TOPUP_LOGS_STORAGE_KEY, topupLogs);
     if (rollHistoryChanged) writeList(ROLL_HISTORY_STORAGE_KEY, rollHistory);
+
+    const activeUser = activeUserId ? users.find((user) => user.id === activeUserId) : null;
+    if (activeUser) await syncUserRecord(activeUser).catch((error) => logSafeSyncError("ACTIVE_USER_SYNC_FAILED", activeUser, error));
+
     if (
       shouldPushLocal &&
       (usersChanged ||
@@ -1096,6 +1122,7 @@ export async function ensureMockDatabase(options: { notifySync?: boolean } = {})
   const existingUsers = getUsers();
   if (existingUsers.length > 0) {
     await migrateAdminUserIfNeeded();
+    await repairActiveUserSync("ACTIVE_USER_SYNC_FAILED");
     return;
   }
 

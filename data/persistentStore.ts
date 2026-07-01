@@ -204,6 +204,15 @@ type SharedStoreWriteOptions = {
   preserveWallets?: boolean;
 };
 
+function logSafeServerError(stage: string, error: unknown, user?: Pick<UserRecord, "id" | "username">) {
+  console.warn(stage, {
+    stage,
+    userId: user?.id,
+    username: user?.username,
+    message: error instanceof Error ? error.message : String(error ?? ""),
+  });
+}
+
 export type PublicStoreSnapshot = {
   products: ProductRecord[];
   categories: ProductCategoryRecord[];
@@ -864,11 +873,16 @@ async function insertMissingWallets(users: UserRecord[]) {
   }));
   if (rows.length === 0) return;
 
-  await supabaseRequest<DbWalletRow[]>("/rest/v1/wallets?on_conflict=user_id", {
-    method: "POST",
-    prefer: "resolution=ignore-duplicates,return=representation",
-    body: JSON.stringify(rows),
-  });
+  try {
+    await supabaseRequest<DbWalletRow[]>("/rest/v1/wallets?on_conflict=user_id", {
+      method: "POST",
+      prefer: "resolution=ignore-duplicates,return=representation",
+      body: JSON.stringify(rows),
+    });
+  } catch (error) {
+    rows.forEach((row) => logSafeServerError("WALLET_BOOTSTRAP_FAILED", error, { id: row.user_id, username: "" }));
+    throw error;
+  }
 }
 
 async function insertMissingUsers(users: UserRecord[]) {
@@ -878,11 +892,16 @@ async function insertMissingUsers(users: UserRecord[]) {
   }));
   if (rows.length === 0) return;
 
-  await supabaseRequest<DbUserRow[]>("/rest/v1/users?on_conflict=id", {
-    method: "POST",
-    prefer: "resolution=ignore-duplicates,return=representation",
-    body: JSON.stringify(rows),
-  });
+  try {
+    await supabaseRequest<DbUserRow[]>("/rest/v1/users?on_conflict=id", {
+      method: "POST",
+      prefer: "resolution=ignore-duplicates,return=representation",
+      body: JSON.stringify(rows),
+    });
+  } catch (error) {
+    users.forEach((user) => logSafeServerError("USER_BOOTSTRAP_FAILED", error, user));
+    throw error;
+  }
 }
 
 async function upsertUsers(users: UserRecord[], options: SharedStoreWriteOptions = {}) {

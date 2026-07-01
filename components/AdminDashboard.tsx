@@ -302,8 +302,15 @@ export function AdminDashboard() {
   }, []);
 
   const refreshFromSupabase = useCallback(async () => {
-    await syncSharedStoreFromServer({ notify: false, force: true });
-    refresh();
+    try {
+      await syncSharedStoreFromServer({ notify: false, force: true });
+      refresh();
+    } catch (error) {
+      console.warn("ADMIN_SYNC_FAILED", {
+        stage: "ADMIN_SYNC_FAILED",
+        message: error instanceof Error ? error.message : String(error ?? ""),
+      });
+    }
   }, [refresh]);
 
   useEffect(() => {
