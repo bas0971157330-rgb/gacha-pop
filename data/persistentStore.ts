@@ -902,10 +902,94 @@ async function insertMissingUsers(users: UserRecord[]) {
   }
 }
 
+function isPlaceholderUsername(username: string, userId: string) {
+  const normalized = username.trim().toLowerCase();
+  if (!normalized) return true;
+  if (normalized.startsWith("user_user_")) return true;
+  if (/^user_[a-f0-9]{8,}$/i.test(normalized)) return true;
+
+  const generated = `user_${userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 80)}`.toLowerCase();
+  return normalized === generated;
+}
+
+function isPlaceholderEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+  return !normalized || normalized.endsWith("@gacha-pop.local");
+}
+
+function hasRealPasswordHash(passwordHash: string) {
+  const normalized = passwordHash.trim();
+  return Boolean(normalized) && normalized !== "server-bootstrap";
+}
+
+async function repairExistingUserProfiles(users: UserRecord[]) {
+  if (users.length === 0) return;
+
+  let existingRows: Pick<DbUserRow, "id" | "username" | "email" | "password_hash" | "role">[];
+  try {
+    existingRows = await selectRows<Pick<DbUserRow, "id" | "username" | "email" | "password_hash" | "role">>(
+      "users",
+      "select=id,username,email,password_hash,role",
+    );
+  } catch (error) {
+    users.forEach((user) => logSafeServerError("SHARED_STORE_PROFILE_REPAIR_FAILED", error, user));
+    return;
+  }
+
+  const rowsById = new Map(existingRows.map((row) => [row.id, row]));
+  const usernameOwners = new Map(existingRows.map((row) => [row.username.trim().toLowerCase(), row.id]));
+  const emailOwners = new Map(existingRows.map((row) => [row.email.trim().toLowerCase(), row.id]));
+
+  for (const user of users) {
+    const existing = rowsById.get(user.id);
+    if (!existing) continue;
+
+    const patch: Partial<Pick<DbUserRow, "username" | "email" | "password_hash" | "updated_at">> = {};
+    const incomingUsername = user.username.trim();
+    const incomingEmail = user.email.trim().toLowerCase();
+
+    if (incomingUsername && !isPlaceholderUsername(incomingUsername, user.id) && isPlaceholderUsername(existing.username, user.id)) {
+      const ownerId = usernameOwners.get(incomingUsername.toLowerCase());
+      if (!ownerId || ownerId === user.id) {
+        patch.username = incomingUsername;
+      } else {
+        logSafeServerError("USER_PROFILE_REPAIR_FAILED", new Error("USERNAME_CONFLICT"), user);
+      }
+    }
+
+    if (incomingEmail && !isPlaceholderEmail(incomingEmail) && isPlaceholderEmail(existing.email)) {
+      const ownerId = emailOwners.get(incomingEmail);
+      if (!ownerId || ownerId === user.id) {
+        patch.email = incomingEmail;
+      } else {
+        logSafeServerError("USER_PROFILE_REPAIR_FAILED", new Error("EMAIL_CONFLICT"), user);
+      }
+    }
+
+    if (!hasRealPasswordHash(existing.password_hash) && hasRealPasswordHash(user.passwordHash)) {
+      patch.password_hash = user.passwordHash;
+    }
+
+    if (Object.keys(patch).length === 0) continue;
+
+    patch.updated_at = nowIso();
+    try {
+      await supabaseRequest<null>(`/rest/v1/users?id=eq.${restEq(user.id)}`, {
+        method: "PATCH",
+        prefer: "return=minimal",
+        body: JSON.stringify(patch),
+      });
+    } catch (error) {
+      logSafeServerError("USER_PROFILE_REPAIR_FAILED", error, user);
+    }
+  }
+}
+
 async function upsertUsers(users: UserRecord[], options: SharedStoreWriteOptions = {}) {
   if (users.length === 0) return;
   if (options.preserveWallets) {
     await insertMissingUsers(users);
+    await repairExistingUserProfiles(users);
     await insertMissingWallets(users);
     return;
   }

@@ -960,7 +960,6 @@ export function AdminDashboard() {
                     <th>User ID</th>
                     <th>Username</th>
                     <th>Email</th>
-                    <th>PIN</th>
                     <th>Coin</th>
                     <th>Role</th>
                     <th>Actions</th>
@@ -975,7 +974,6 @@ export function AdminDashboard() {
                         {user.email}
                         {user.isOrderOnly && <small className="admin-order-only-note">จากออเดอร์</small>}
                       </td>
-                      <td>{user.pin}</td>
                       <td>{user.coins.toLocaleString("th-TH")}</td>
                       <td><span className="admin-badge admin-badge-purple">{user.role}</span></td>
                       <td className="admin-actions-cell">
